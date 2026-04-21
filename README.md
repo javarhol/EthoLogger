@@ -1,36 +1,49 @@
-# OmniCoder
+# EthoLogger
 
-A browser-based behavioral coding tool for scoring animal behavior from video. No installation required — just open the github page or clone the repository and open `index.html` in Chrome
+**Video Annotation & Behavioral Coding**
 
-OmniCoder is designed as a simple, modern alternative to [Solomon Coder](https://solomon.andraspeter.com/) and [CowLog](https://cowlog.org/) for undergraduate researchers.
+Build an ethogram. Code animal behavior from video. Export your data.
 
-![OmniCoder coding interface showing video player, behavior buttons, and annotation timeline](assets/screenshot.png)
+EthoLogger is a free, browser-based tool for scoring animal behavior from video. It runs entirely in the browser — no installation, no server, and no data ever leaves your machine.
 
-## Quick Start
+**[Open EthoLogger](https://javarhol.github.io/EthoLogger/)**
 
-1. Clone the repository
-2. Open `index.html` in **Google Chrome** (double-click the file)
-3. Click **New Project** and enter a project name + your coder ID
-4. Build your ethogram (define behaviors) or click **Load Sample Ethogram** for a pre-made mouse behavior set
-5. Click **Next: Code Video** and load an MP4 video file
-6. Press keyboard shortcuts to code behaviors as the video plays
-7. Click **Export CSV** when finished
+![EthoLogger coding interface showing video player, behavior buttons, and annotation timeline](assets/screenshot.png)
+
+## Getting Started
+
+1. Go to **[javarhol.github.io/EthoLogger](https://javarhol.github.io/EthoLogger/)**
+2. Click **New Project** and enter a project name + your coder ID
+3. Build your ethogram (define behaviors) or click **Load Sample Ethogram** for a pre-made mouse behavior set
+4. Click **Next: Code Video** and load an MP4 video file
+5. Press keyboard shortcuts to code behaviors as the video plays
+6. Click **Export CSV** when finished
+
+> You can also clone this repository and open `index.html` directly in Chrome.
 
 ## Features
+
+### Project Management
+- Create, save, and resume multiple projects
+- Export/import projects as JSON for backup or sharing between machines
+- Auto-saves your work to the browser's local storage
 
 ### Ethogram Builder
 - Define behaviors with a name, category, type (point or state), keyboard shortcut, and color
 - **Point events** mark a single moment in time (e.g., a jump)
 - **State events** have a duration — press the key to start, press again to stop (e.g., grooming)
+- Real-time keyboard shortcut validation with feedback
+- Auto-assigned colors from a 12-color palette
 - Save/load ethograms as JSON files to share with other coders
 - Includes a sample mouse home cage ethogram with 8 common behaviors
 
 ### Video Coding
 - Load any MP4 video file from your computer (the file stays on your machine — nothing is uploaded)
+- Playback speed controls: 0.25x, 0.5x, 1x, 1.5x, 2x
+- Frame-accurate stepping with `,` and `.` keys
 - Keyboard-driven coding for speed, or click the behavior buttons
 - Active state events glow to show they're recording
 - Undo with Ctrl+Z (Cmd+Z on Mac)
-- Auto-saves your work to the browser's local storage
 
 ### Timeline
 - Color-coded bars show all coded behaviors over time
@@ -64,6 +77,7 @@ Exports a standard CSV file with these columns:
 | Right arrow | Seek forward 5 seconds |
 | Ctrl+Z | Undo last action |
 | ? | Show help overlay |
+| Escape | Close help overlay |
 | a-z, 0-9 | Code behavior (as defined in your ethogram) |
 
 ## Sample Ethogram (Mouse Home Cage)
@@ -79,24 +93,34 @@ Exports a standard CSV file with these columns:
 | Z | Freezing | Anxiety | State |
 | J | Jump | Locomotion | Point |
 
+## Privacy & Data
+
+EthoLogger runs entirely in your browser. No data is uploaded to any server. Video files are never transmitted — they stay on your machine. All project data is stored in your browser's localStorage.
+
+## Tips for Coders
+
+- **Code one behavior at a time.** Watch the full video coding only locomotion, then watch again for grooming, etc. This is faster and more accurate than coding everything at once.
+- **Use keyboard shortcuts** rather than clicking buttons — it lets you keep your eyes on the video.
+- **Save your ethogram as JSON** and share it with all coders on your project so everyone uses the same coding scheme.
+- **Export frequently.** While auto-save protects against accidental tab closure, exporting a CSV or project JSON gives you a permanent backup.
+- **Use project JSON export/import** to back up your work or transfer projects between machines and team members.
+
 ## Browser Support
 
 - **Recommended:** Google Chrome (latest)
 - Works in Firefox, Safari, and Edge
 - Video format support depends on your browser — MP4 (H.264) works everywhere
-- On iPad: works best with a physical keyboard; for full functionality, host the files on a web server (e.g., GitHub Pages) rather than opening from the Files app
+- On iPad: works best with a physical keyboard; for full functionality, use the hosted version at the link above rather than opening from the Files app
 
-## Technical Details
+## For Developers
 
 - Pure HTML/CSS/JavaScript — no build tools, no server, no dependencies to install
 - Two vendored libraries: [Papa Parse](https://www.papaparse.com/) (CSV) and [VideoFrame.js](https://github.com/allensarkisyan/VideoFrame) (frame stepping)
-- All data stored in your browser's localStorage
+- All data stored in the browser's localStorage
 - Works from the `file://` protocol (just double-click `index.html`)
 
-## File Structure
-
 ```
-omnicoder/
+ethologger/
   index.html              Entry point
   css/style.css           Stylesheet
   js/
@@ -113,13 +137,6 @@ omnicoder/
   sample/
     sample-ethogram.json  Mouse behavior ethogram
 ```
-
-## Tips for Coders
-
-- **Code one behavior at a time.** Watch the full video coding only locomotion, then watch again for grooming, etc. This is faster and more accurate than coding everything at once.
-- **Use keyboard shortcuts** rather than clicking buttons — it lets you keep your eyes on the video.
-- **Save your ethogram as JSON** and share it with all coders on your project so everyone uses the same coding scheme.
-- **Export frequently.** While auto-save protects against accidental tab closure, exporting a CSV or project JSON gives you a permanent backup.
 
 ## License
 

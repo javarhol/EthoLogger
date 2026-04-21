@@ -1,12 +1,12 @@
 /**
- * OmniCoder App Module
+ * EthoLogger App Module
  * Application orchestrator — boot sequence, view navigation, project management.
- * This is the last script loaded. Depends on all other OmniCoder modules.
+ * This is the last script loaded. Depends on all other EthoLogger modules.
  */
 (function () {
     'use strict';
 
-    window.OmniCoder = window.OmniCoder || {};
+    window.EthoLogger = window.EthoLogger || {};
 
     // ---------------------------------------------------------------
     // State
@@ -23,7 +23,7 @@
      */
     function init() {
         // Check for a last-used project (informational; landing is always shown first)
-        var settings = OmniCoder.Store.getSettings();
+        var settings = EthoLogger.Store.getSettings();
         if (settings.lastProjectId) {
             // Could auto-resume, but we show landing for explicitness
         }
@@ -43,8 +43,8 @@
         if (saveBtn) {
             saveBtn.addEventListener('click', function () {
                 if (currentProject) {
-                    OmniCoder.Store.saveProject(currentProject);
-                    OmniCoder.Utils.showToast('Project saved');
+                    EthoLogger.Store.saveProject(currentProject);
+                    EthoLogger.Utils.showToast('Project saved');
                 }
             });
         }
@@ -62,7 +62,7 @@
         if (exportBtn) {
             exportBtn.addEventListener('click', function () {
                 if (currentProject) {
-                    OmniCoder.Store.exportProjectJSON(currentProject);
+                    EthoLogger.Store.exportProjectJSON(currentProject);
                 }
             });
         }
@@ -92,7 +92,7 @@
         _cleanupCurrentView();
         currentProject = null;
         _updateHeader();
-        OmniCoder.Utils.showView('view-landing');
+        EthoLogger.Utils.showView('view-landing');
         _renderLandingProjects();
     }
 
@@ -103,7 +103,7 @@
         var container = document.getElementById('recent-projects');
         if (!container) return;
 
-        var projects = OmniCoder.Store.listProjects();
+        var projects = EthoLogger.Store.listProjects();
         container.innerHTML = '';
 
         if (projects.length === 0) {
@@ -215,9 +215,9 @@
             e.stopPropagation();
             var id = this.getAttribute('data-project-id');
             if (confirm('Delete this project? This cannot be undone.')) {
-                OmniCoder.Store.deleteProject(id);
+                EthoLogger.Store.deleteProject(id);
                 _renderLandingProjects();
-                OmniCoder.Utils.showToast('Project deleted');
+                EthoLogger.Utils.showToast('Project deleted');
             }
         });
         card.appendChild(deleteBtn);
@@ -236,12 +236,12 @@
      * @param {File} file
      */
     function _importProjectFile(file) {
-        OmniCoder.Store.importProjectJSON(file).then(function (project) {
-            OmniCoder.Store.saveProject(project);
+        EthoLogger.Store.importProjectJSON(file).then(function (project) {
+            EthoLogger.Store.saveProject(project);
             resumeProject(project.id);
-            OmniCoder.Utils.showToast('Project imported: ' + project.name);
+            EthoLogger.Utils.showToast('Project imported: ' + project.name);
         })['catch'](function (err) {
-            OmniCoder.Utils.showToast(err.message || 'Failed to import project');
+            EthoLogger.Utils.showToast(err.message || 'Failed to import project');
         });
     }
 
@@ -251,7 +251,7 @@
 
     function showSetup() {
         _cleanupCurrentView();
-        OmniCoder.Utils.showView('view-setup');
+        EthoLogger.Utils.showView('view-setup');
 
         var nameInput = document.getElementById('input-project-name');
         var coderInput = document.getElementById('input-coder-id');
@@ -337,13 +337,13 @@
         // Create new project
         var now = new Date().toISOString();
         currentProject = {
-            id: OmniCoder.Utils.generateId('proj'),
+            id: EthoLogger.Utils.generateId('proj'),
             name: name,
             coderId: coderId,
             createdAt: now,
             modifiedAt: now,
             ethogram: {
-                id: OmniCoder.Utils.generateId('eth'),
+                id: EthoLogger.Utils.generateId('eth'),
                 name: name + ' Ethogram',
                 description: '',
                 behaviors: []
@@ -355,7 +355,7 @@
         };
 
         // Save to store
-        OmniCoder.Store.saveProject(currentProject);
+        EthoLogger.Store.saveProject(currentProject);
         _updateHeader();
 
         // Navigate to ethogram builder
@@ -368,12 +368,12 @@
 
     function showEthogramBuilder() {
         _cleanupCurrentView();
-        OmniCoder.Utils.showView('view-ethogram');
+        EthoLogger.Utils.showView('view-ethogram');
 
         // Initialize the ethogram builder UI
         var contentEl = document.getElementById('ethogram-content');
-        if (contentEl && OmniCoder.Ethogram) {
-            OmniCoder.Ethogram.init(contentEl);
+        if (contentEl && EthoLogger.Ethogram) {
+            EthoLogger.Ethogram.init(contentEl);
         }
 
         _wireEthogramToolbar();
@@ -404,7 +404,7 @@
             importEthInput.parentNode.replaceChild(newImportInput, importEthInput);
             newImportInput.addEventListener('change', function () {
                 if (newImportInput.files && newImportInput.files.length > 0) {
-                    OmniCoder.Store.importEthogramJSON(newImportInput.files[0]).then(function (ethogram) {
+                    EthoLogger.Store.importEthogramJSON(newImportInput.files[0]).then(function (ethogram) {
                         if (currentProject) {
                             currentProject.ethogram.behaviors = ethogram.behaviors;
                             if (ethogram.name) {
@@ -413,16 +413,16 @@
                             if (ethogram.description !== undefined) {
                                 currentProject.ethogram.description = ethogram.description;
                             }
-                            OmniCoder.Store.saveProject(currentProject);
+                            EthoLogger.Store.saveProject(currentProject);
                             // Re-init ethogram UI
                             var contentEl = document.getElementById('ethogram-content');
-                            if (contentEl && OmniCoder.Ethogram) {
-                                OmniCoder.Ethogram.init(contentEl);
+                            if (contentEl && EthoLogger.Ethogram) {
+                                EthoLogger.Ethogram.init(contentEl);
                             }
-                            OmniCoder.Utils.showToast('Ethogram loaded: ' + (ethogram.name || 'imported'));
+                            EthoLogger.Utils.showToast('Ethogram loaded: ' + (ethogram.name || 'imported'));
                         }
                     })['catch'](function (err) {
-                        OmniCoder.Utils.showToast(err.message || 'Failed to import ethogram');
+                        EthoLogger.Utils.showToast(err.message || 'Failed to import ethogram');
                     });
                 }
             });
@@ -445,7 +445,7 @@
             saveEthBtn.parentNode.replaceChild(newSaveBtn, saveEthBtn);
             newSaveBtn.addEventListener('click', function () {
                 if (currentProject && currentProject.ethogram) {
-                    OmniCoder.Store.exportEthogramJSON(currentProject.ethogram);
+                    EthoLogger.Store.exportEthogramJSON(currentProject.ethogram);
                 }
             });
         }
@@ -459,7 +459,7 @@
                 if (!currentProject || !currentProject.ethogram ||
                     !currentProject.ethogram.behaviors ||
                     currentProject.ethogram.behaviors.length === 0) {
-                    OmniCoder.Utils.showToast('Please add at least one behavior before continuing.');
+                    EthoLogger.Utils.showToast('Please add at least one behavior before continuing.');
                     return;
                 }
                 showCoder();
@@ -483,7 +483,7 @@
                 try {
                     var ethogram = JSON.parse(xhr.responseText);
                     if (!ethogram.behaviors || !Array.isArray(ethogram.behaviors)) {
-                        OmniCoder.Utils.showToast('Invalid sample ethogram: missing behaviors array.');
+                        EthoLogger.Utils.showToast('Invalid sample ethogram: missing behaviors array.');
                         return;
                     }
 
@@ -495,25 +495,25 @@
                         if (ethogram.description !== undefined) {
                             currentProject.ethogram.description = ethogram.description;
                         }
-                        OmniCoder.Store.saveProject(currentProject);
+                        EthoLogger.Store.saveProject(currentProject);
 
                         // Re-init ethogram UI
                         var contentEl = document.getElementById('ethogram-content');
-                        if (contentEl && OmniCoder.Ethogram) {
-                            OmniCoder.Ethogram.init(contentEl);
+                        if (contentEl && EthoLogger.Ethogram) {
+                            EthoLogger.Ethogram.init(contentEl);
                         }
-                        OmniCoder.Utils.showToast('Sample ethogram loaded');
+                        EthoLogger.Utils.showToast('Sample ethogram loaded');
                     }
                 } catch (e) {
-                    OmniCoder.Utils.showToast('Failed to parse sample ethogram: ' + e.message);
+                    EthoLogger.Utils.showToast('Failed to parse sample ethogram: ' + e.message);
                 }
             } else {
-                OmniCoder.Utils.showToast('Failed to load sample ethogram (HTTP ' + xhr.status + ').');
+                EthoLogger.Utils.showToast('Failed to load sample ethogram (HTTP ' + xhr.status + ').');
             }
         };
 
         xhr.onerror = function () {
-            OmniCoder.Utils.showToast(
+            EthoLogger.Utils.showToast(
                 'Could not load sample ethogram. If using file:// protocol, ' +
                 'try opening Chrome with --allow-file-access-from-files flag, ' +
                 'or manually load the file via "Load Ethogram JSON".'
@@ -529,16 +529,16 @@
 
     function showCoder() {
         _cleanupCurrentView();
-        OmniCoder.Utils.showView('view-coder');
+        EthoLogger.Utils.showView('view-coder');
 
         // Initialize the coder module
-        if (OmniCoder.Coder && currentProject) {
-            OmniCoder.Coder.init(currentProject);
+        if (EthoLogger.Coder && currentProject) {
+            EthoLogger.Coder.init(currentProject);
         }
 
         // Initialize the timeline module
-        if (OmniCoder.Timeline && currentProject) {
-            OmniCoder.Timeline.init('timeline-canvas', currentProject);
+        if (EthoLogger.Timeline && currentProject) {
+            EthoLogger.Timeline.init('timeline-canvas', currentProject);
         }
 
         // Wire up export CSV button in coder view
@@ -547,15 +547,15 @@
             var newExportBtn = exportBtn.cloneNode(true);
             exportBtn.parentNode.replaceChild(newExportBtn, exportBtn);
             newExportBtn.addEventListener('click', function () {
-                if (currentProject && OmniCoder.Exporter) {
-                    OmniCoder.Exporter.exportCSV(currentProject);
+                if (currentProject && EthoLogger.Exporter) {
+                    EthoLogger.Exporter.exportCSV(currentProject);
                 }
             });
         }
 
         // Update settings with lastProjectId
         if (currentProject) {
-            OmniCoder.Store.updateSettings({ lastProjectId: currentProject.id });
+            EthoLogger.Store.updateSettings({ lastProjectId: currentProject.id });
         }
 
         _updateHeader();
@@ -570,9 +570,9 @@
      * @param {string} id - Project ID.
      */
     function resumeProject(id) {
-        var project = OmniCoder.Store.loadProject(id);
+        var project = EthoLogger.Store.loadProject(id);
         if (!project) {
-            OmniCoder.Utils.showToast('Project not found');
+            EthoLogger.Utils.showToast('Project not found');
             return;
         }
 
@@ -607,13 +607,13 @@
      */
     function _cleanupCurrentView() {
         // Destroy coder if it exists (stops playback, removes listeners)
-        if (OmniCoder.Coder && typeof OmniCoder.Coder.destroy === 'function') {
-            OmniCoder.Coder.destroy();
+        if (EthoLogger.Coder && typeof EthoLogger.Coder.destroy === 'function') {
+            EthoLogger.Coder.destroy();
         }
 
         // Destroy timeline if it exists
-        if (OmniCoder.Timeline && typeof OmniCoder.Timeline.destroy === 'function') {
-            OmniCoder.Timeline.destroy();
+        if (EthoLogger.Timeline && typeof EthoLogger.Timeline.destroy === 'function') {
+            EthoLogger.Timeline.destroy();
         }
     }
 
@@ -822,7 +822,7 @@
         return currentProject;
     }
 
-    OmniCoder.App = {
+    EthoLogger.App = {
         init: init,
         showLanding: showLanding,
         showSetup: showSetup,
@@ -839,5 +839,5 @@
 // Boot
 // ---------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', function () {
-    OmniCoder.App.init();
+    EthoLogger.App.init();
 });

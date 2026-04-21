@@ -1,12 +1,12 @@
 /**
- * OmniCoder Exporter Module
+ * EthoLogger Exporter Module
  * Handles CSV export of annotation data via Papa Parse.
- * Depends on OmniCoder.Utils (utils.js) and Papa Parse (vendor/papaparse.min.js).
+ * Depends on EthoLogger.Utils (utils.js) and Papa Parse (vendor/papaparse.min.js).
  */
 (function () {
     'use strict';
 
-    window.OmniCoder = window.OmniCoder || {};
+    window.EthoLogger = window.EthoLogger || {};
 
     /**
      * Export a project's annotations as a CSV file download.
@@ -17,7 +17,7 @@
      */
     function exportCSV(project) {
         if (!project || !project.annotations || project.annotations.length === 0) {
-            OmniCoder.Utils.showToast('No annotations to export');
+            EthoLogger.Utils.showToast('No annotations to export');
             return;
         }
 
@@ -42,8 +42,8 @@
                 onset_sec: ann.onset.toFixed(3),
                 offset_sec: ann.offset !== null ? ann.offset.toFixed(3) : '',
                 duration_sec: ann.offset !== null ? (ann.offset - ann.onset).toFixed(3) : '0.000',
-                onset_time: OmniCoder.Utils.formatTime(ann.onset),
-                offset_time: ann.offset !== null ? OmniCoder.Utils.formatTime(ann.offset) : '',
+                onset_time: EthoLogger.Utils.formatTime(ann.onset),
+                offset_time: ann.offset !== null ? EthoLogger.Utils.formatTime(ann.offset) : '',
                 behavior: behavior.name,
                 category: behavior.category,
                 type: behavior.type,
@@ -64,13 +64,13 @@
 
         // Trigger file download
         var filename = project.name + '_annotations.csv';
-        OmniCoder.Utils.downloadFile(csv, filename, 'text/csv');
+        EthoLogger.Utils.downloadFile(csv, filename, 'text/csv');
 
-        OmniCoder.Utils.showToast('CSV exported: ' + filename);
+        EthoLogger.Utils.showToast('CSV exported: ' + filename);
     }
 
     // Expose on the shared namespace
-    OmniCoder.Exporter = {
+    EthoLogger.Exporter = {
         exportCSV: exportCSV
     };
 })();

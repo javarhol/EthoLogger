@@ -1,12 +1,12 @@
 /**
- * OmniCoder Timeline Module
+ * EthoLogger Timeline Module
  * Canvas-based timeline renderer for behavioral annotation visualization.
- * Depends on OmniCoder.Utils (utils.js must be loaded first).
+ * Depends on EthoLogger.Utils (utils.js must be loaded first).
  */
 (function () {
     'use strict';
 
-    window.OmniCoder = window.OmniCoder || {};
+    window.EthoLogger = window.EthoLogger || {};
 
     // ---------------------------------------------------------------
     // Module state
@@ -52,7 +52,7 @@
     function init(canvasId, proj) {
         canvas = document.getElementById(canvasId);
         if (!canvas) {
-            console.error('OmniCoder Timeline: canvas element "' + canvasId + '" not found.');
+            console.error('EthoLogger Timeline: canvas element "' + canvasId + '" not found.');
             return;
         }
 
@@ -186,7 +186,7 @@
         laneHeight = canvasHeight / numLanes;
 
         // Clamp between 18px and 40px
-        laneHeight = OmniCoder.Utils.clamp(laneHeight, 18, 40);
+        laneHeight = EthoLogger.Utils.clamp(laneHeight, 18, 40);
     }
 
     /**
@@ -568,7 +568,7 @@
         ctx.stroke();
 
         // Current time label
-        var timeLabel = OmniCoder.Utils.formatTime(currentTime);
+        var timeLabel = EthoLogger.Utils.formatTime(currentTime);
         ctx.fillStyle = '#ff4444';
         ctx.font = 'bold 10px monospace';
         ctx.textBaseline = 'top';
@@ -645,7 +645,7 @@
         }
 
         // Clamp
-        pixelsPerSecond = OmniCoder.Utils.clamp(pixelsPerSecond, _minPixelsPerSecond, _maxPixelsPerSecond);
+        pixelsPerSecond = EthoLogger.Utils.clamp(pixelsPerSecond, _minPixelsPerSecond, _maxPixelsPerSecond);
 
         // Adjust scrollOffset to keep the anchor time under the mouse
         scrollOffset = anchorTime - (mouseX - leftMargin) / pixelsPerSecond;
@@ -662,7 +662,7 @@
      * @param {number} level - New pixelsPerSecond value.
      */
     function setZoom(level) {
-        pixelsPerSecond = OmniCoder.Utils.clamp(level, _minPixelsPerSecond, _maxPixelsPerSecond);
+        pixelsPerSecond = EthoLogger.Utils.clamp(level, _minPixelsPerSecond, _maxPixelsPerSecond);
         _renderCurrent();
     }
 
@@ -829,7 +829,7 @@
     // Public API
     // ---------------------------------------------------------------
 
-    OmniCoder.Timeline = {
+    EthoLogger.Timeline = {
         // State (read access)
         get canvas() { return canvas; },
         get ctx() { return ctx; },

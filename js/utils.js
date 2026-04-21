@@ -1,11 +1,11 @@
 /**
- * OmniCoder Utilities Module
+ * EthoLogger Utilities Module
  * Foundational helper functions used throughout the application.
  */
 (function () {
     'use strict';
 
-    window.OmniCoder = window.OmniCoder || {};
+    window.EthoLogger = window.EthoLogger || {};
 
     /**
      * Generate a short unique ID with a given prefix.
@@ -162,7 +162,7 @@
     }
 
     // Expose on the shared namespace
-    OmniCoder.Utils = {
+    EthoLogger.Utils = {
         generateId: generateId,
         formatTime: formatTime,
         debounce: debounce,
