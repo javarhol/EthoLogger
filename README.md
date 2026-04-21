@@ -4,6 +4,8 @@ A browser-based behavioral coding tool for scoring animal behavior from video. N
 
 LOME is designed as a simple, free alternative to [Solomon Coder](https://solomon.andraspeter.com/) and [CowLog](https://cowlog.org/) for undergraduate researchers.
 
+![LOME coding interface showing video player, behavior buttons, and annotation timeline](assets/screenshot.png)
+
 ## Quick Start
 
 1. Open `index.html` in **Google Chrome** (double-click the file)
