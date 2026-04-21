@@ -1,12 +1,12 @@
 /**
- * OmniCoder Ethogram Module
+ * EthoLogger Ethogram Module
  * Handles ethogram building: behavior CRUD, validation, and UI rendering.
- * Depends on OmniCoder.Utils (utils.js) and OmniCoder.Store (store.js).
+ * Depends on EthoLogger.Utils (utils.js) and EthoLogger.Store (store.js).
  */
 (function () {
     'use strict';
 
-    window.OmniCoder = window.OmniCoder || {};
+    window.EthoLogger = window.EthoLogger || {};
 
     // ---------------------------------------------------------------
     // Constants
@@ -143,7 +143,7 @@
         }
 
         var behavior = {
-            id: OmniCoder.Utils.generateId('b'),
+            id: EthoLogger.Utils.generateId('b'),
             name: data.name.trim(),
             category: (data.category || '').trim(),
             type: data.type === 'state' ? 'state' : 'point',
@@ -266,8 +266,8 @@
     }
 
     function _autoSave() {
-        if (_project && OmniCoder.Store && OmniCoder.Store.autoSave) {
-            OmniCoder.Store.autoSave(_project);
+        if (_project && EthoLogger.Store && EthoLogger.Store.autoSave) {
+            EthoLogger.Store.autoSave(_project);
         }
     }
 
@@ -762,12 +762,12 @@
         if (result.ok) {
             _editingBehaviorId = null;
             _render();
-            OmniCoder.Utils.showToast(
+            EthoLogger.Utils.showToast(
                 _editingBehaviorId ? 'Behavior updated.' : 'Behavior added.',
                 1500
             );
         } else {
-            OmniCoder.Utils.showToast(result.error || 'Validation failed.', 2500);
+            EthoLogger.Utils.showToast(result.error || 'Validation failed.', 2500);
         }
     }
 
@@ -792,7 +792,7 @@
 
         if (confirm('Delete "' + label + '"? This cannot be undone.')) {
             removeBehavior(id);
-            OmniCoder.Utils.showToast('Behavior deleted.', 1500);
+            EthoLogger.Utils.showToast('Behavior deleted.', 1500);
         }
     }
 
@@ -807,15 +807,15 @@
     function init(containerEl) {
         _containerEl = containerEl;
 
-        // Receive the current project from OmniCoder.App
-        if (OmniCoder.App && OmniCoder.App.getCurrentProject) {
-            _project = OmniCoder.App.getCurrentProject();
+        // Receive the current project from EthoLogger.App
+        if (EthoLogger.App && EthoLogger.App.getCurrentProject) {
+            _project = EthoLogger.App.getCurrentProject();
         }
 
         // Ensure the project has an ethogram object
         if (_project && !_project.ethogram) {
             _project.ethogram = {
-                id: OmniCoder.Utils.generateId('eth'),
+                id: EthoLogger.Utils.generateId('eth'),
                 name: 'Untitled Ethogram',
                 description: '',
                 createdAt: new Date().toISOString(),
@@ -832,7 +832,7 @@
     // Public API
     // ---------------------------------------------------------------
 
-    OmniCoder.Ethogram = {
+    EthoLogger.Ethogram = {
         init: init,
         createBehavior: createBehavior,
         updateBehavior: updateBehavior,

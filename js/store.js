@@ -1,12 +1,12 @@
 /**
- * OmniCoder Store Module
+ * EthoLogger Store Module
  * Handles persistence via localStorage and file import/export.
- * Depends on OmniCoder.Utils (utils.js must be loaded first).
+ * Depends on EthoLogger.Utils (utils.js must be loaded first).
  */
 (function () {
     'use strict';
 
-    window.OmniCoder = window.OmniCoder || {};
+    window.EthoLogger = window.EthoLogger || {};
 
     var INDEX_KEY = 'lome_projects_index';
     var SETTINGS_KEY = 'lome_settings';
@@ -26,7 +26,7 @@
                 return JSON.parse(raw);
             }
         } catch (e) {
-            console.error('OmniCoder Store: failed to read project index', e);
+            console.error('EthoLogger Store: failed to read project index', e);
         }
         return [];
     }
@@ -82,7 +82,7 @@
                 return JSON.parse(raw);
             }
         } catch (e) {
-            console.error('OmniCoder Store: failed to load project ' + id, e);
+            console.error('EthoLogger Store: failed to load project ' + id, e);
         }
         return null;
     }
@@ -103,7 +103,7 @@
                     'Storage quota exceeded. Please export your projects and delete old ones to free up space.'
                 );
             }
-            console.error('OmniCoder Store: failed to save project', e);
+            console.error('EthoLogger Store: failed to save project', e);
             return;
         }
 
@@ -132,7 +132,7 @@
     /**
      * Debounced version of saveProject (500ms).
      */
-    var autoSave = OmniCoder.Utils.debounce(saveProject, 500);
+    var autoSave = EthoLogger.Utils.debounce(saveProject, 500);
 
     // ---------------------------------------------------------------
     // Settings
@@ -149,7 +149,7 @@
                 return JSON.parse(raw);
             }
         } catch (e) {
-            console.error('OmniCoder Store: failed to read settings', e);
+            console.error('EthoLogger Store: failed to read settings', e);
         }
         return {};
     }
@@ -177,7 +177,7 @@
     function exportProjectJSON(project) {
         var json = JSON.stringify(project, null, 2);
         var filename = (project.name || 'project') + '_project.json';
-        OmniCoder.Utils.downloadFile(json, filename, 'application/json');
+        EthoLogger.Utils.downloadFile(json, filename, 'application/json');
     }
 
     /**
@@ -217,7 +217,7 @@
     function exportEthogramJSON(ethogram) {
         var json = JSON.stringify(ethogram, null, 2);
         var filename = (ethogram.name || 'ethogram') + '_ethogram.json';
-        OmniCoder.Utils.downloadFile(json, filename, 'application/json');
+        EthoLogger.Utils.downloadFile(json, filename, 'application/json');
     }
 
     /**
@@ -252,7 +252,7 @@
     }
 
     // Expose on the shared namespace
-    OmniCoder.Store = {
+    EthoLogger.Store = {
         listProjects: listProjects,
         loadProject: loadProject,
         saveProject: saveProject,

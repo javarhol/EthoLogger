@@ -1,28 +1,28 @@
 /**
- * OmniCoder Coder Module
+ * EthoLogger Coder Module
  * Core video coding engine: video playback, keyboard-driven behavior coding,
  * and undo system. Handles the main coding workflow where users annotate
  * video with behavioral events.
  *
  * Depends on:
- *   - OmniCoder.Utils (utils.js)
- *   - OmniCoder.Store (store.js)
- *   - OmniCoder.Ethogram (ethogram.js)
+ *   - EthoLogger.Utils (utils.js)
+ *   - EthoLogger.Store (store.js)
+ *   - EthoLogger.Ethogram (ethogram.js)
  *   - VideoFrame (vendor/VideoFrame.min.js)
  *
  * Optional (called dynamically if available):
- *   - OmniCoder.Timeline
- *   - OmniCoder.Exporter
+ *   - EthoLogger.Timeline
+ *   - EthoLogger.Exporter
  */
 (function () {
     'use strict';
 
-    window.OmniCoder = window.OmniCoder || {};
+    window.EthoLogger = window.EthoLogger || {};
 
-    var generateId = OmniCoder.Utils.generateId;
-    var formatTime = OmniCoder.Utils.formatTime;
-    var showToast = OmniCoder.Utils.showToast;
-    var clamp = OmniCoder.Utils.clamp;
+    var generateId = EthoLogger.Utils.generateId;
+    var formatTime = EthoLogger.Utils.formatTime;
+    var showToast = EthoLogger.Utils.showToast;
+    var clamp = EthoLogger.Utils.clamp;
 
     // ------------------------------------------------------------------
     // Module constants
@@ -224,12 +224,12 @@
                     }
                 });
             } catch (e) {
-                console.warn('OmniCoder Coder: VideoFrame initialization failed', e);
+                console.warn('EthoLogger Coder: VideoFrame initialization failed', e);
                 videoFrame = null;
             }
 
             updateTimeDisplay();
-            OmniCoder.Store.autoSave(currentProject);
+            EthoLogger.Store.autoSave(currentProject);
             showToast('Video loaded: ' + file.name);
         };
 
@@ -306,7 +306,7 @@
 
             // Behavior key mapping
             if (currentProject && currentProject.ethogram) {
-                var keyMap = OmniCoder.Ethogram.getKeyMap(currentProject.ethogram);
+                var keyMap = EthoLogger.Ethogram.getKeyMap(currentProject.ethogram);
                 var lowerKey = key.toLowerCase();
 
                 if (keyMap[lowerKey]) {
@@ -398,8 +398,8 @@
         // 9. Export CSV button
         if (exportCsvBtn) {
             exportCsvBtn.addEventListener('click', function () {
-                if (OmniCoder.Exporter && OmniCoder.Exporter.exportCSV) {
-                    OmniCoder.Exporter.exportCSV(currentProject);
+                if (EthoLogger.Exporter && EthoLogger.Exporter.exportCSV) {
+                    EthoLogger.Exporter.exportCSV(currentProject);
                 }
             });
         }
@@ -457,8 +457,8 @@
             updateTimeDisplay();
 
             // Update timeline visualization if available
-            if (OmniCoder.Timeline && typeof OmniCoder.Timeline.render === 'function' && videoElement) {
-                OmniCoder.Timeline.render(
+            if (EthoLogger.Timeline && typeof EthoLogger.Timeline.render === 'function' && videoElement) {
+                EthoLogger.Timeline.render(
                     videoElement.currentTime,
                     currentProject.annotations,
                     (currentProject.ethogram && currentProject.ethogram.behaviors) || [],
@@ -624,7 +624,7 @@
         showToast(behavior.name + ' at ' + formatTime(onset));
         updateAnnotationCount();
         _triggerTimelineRedraw();
-        OmniCoder.Store.autoSave(currentProject);
+        EthoLogger.Store.autoSave(currentProject);
     }
 
     /**
@@ -657,7 +657,7 @@
 
         showToast(behavior.name + ' started at ' + formatTime(onset));
         updateAnnotationCount();
-        OmniCoder.Store.autoSave(currentProject);
+        EthoLogger.Store.autoSave(currentProject);
     }
 
     /**
@@ -691,7 +691,7 @@
 
         updateAnnotationCount();
         _triggerTimelineRedraw();
-        OmniCoder.Store.autoSave(currentProject);
+        EthoLogger.Store.autoSave(currentProject);
     }
 
     // ------------------------------------------------------------------
@@ -755,14 +755,14 @@
                 break;
 
             default:
-                console.warn('OmniCoder Coder: unknown undo action type:', action.type);
+                console.warn('EthoLogger Coder: unknown undo action type:', action.type);
                 break;
         }
 
         showToast('Undone');
         updateAnnotationCount();
         _triggerTimelineRedraw();
-        OmniCoder.Store.autoSave(currentProject);
+        EthoLogger.Store.autoSave(currentProject);
     }
 
     // ------------------------------------------------------------------
@@ -852,8 +852,8 @@
      * Trigger a timeline redraw if the Timeline module is available.
      */
     function _triggerTimelineRedraw() {
-        if (OmniCoder.Timeline && typeof OmniCoder.Timeline.render === 'function' && videoElement) {
-            OmniCoder.Timeline.render(
+        if (EthoLogger.Timeline && typeof EthoLogger.Timeline.render === 'function' && videoElement) {
+            EthoLogger.Timeline.render(
                 videoElement.currentTime || 0,
                 currentProject.annotations,
                 (currentProject.ethogram && currentProject.ethogram.behaviors) || [],
@@ -892,7 +892,7 @@
     // Public API
     // ------------------------------------------------------------------
 
-    OmniCoder.Coder = {
+    EthoLogger.Coder = {
         // State
         get currentProject() { return currentProject; },
         set currentProject(val) { currentProject = val; },
