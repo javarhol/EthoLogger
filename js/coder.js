@@ -1,28 +1,28 @@
 /**
- * LOME Coder Module
+ * OmniCoder Coder Module
  * Core video coding engine: video playback, keyboard-driven behavior coding,
  * and undo system. Handles the main coding workflow where users annotate
  * video with behavioral events.
  *
  * Depends on:
- *   - LOME.Utils (utils.js)
- *   - LOME.Store (store.js)
- *   - LOME.Ethogram (ethogram.js)
+ *   - OmniCoder.Utils (utils.js)
+ *   - OmniCoder.Store (store.js)
+ *   - OmniCoder.Ethogram (ethogram.js)
  *   - VideoFrame (vendor/VideoFrame.min.js)
  *
  * Optional (called dynamically if available):
- *   - LOME.Timeline
- *   - LOME.Exporter
+ *   - OmniCoder.Timeline
+ *   - OmniCoder.Exporter
  */
 (function () {
     'use strict';
 
-    window.LOME = window.LOME || {};
+    window.OmniCoder = window.OmniCoder || {};
 
-    var generateId = LOME.Utils.generateId;
-    var formatTime = LOME.Utils.formatTime;
-    var showToast = LOME.Utils.showToast;
-    var clamp = LOME.Utils.clamp;
+    var generateId = OmniCoder.Utils.generateId;
+    var formatTime = OmniCoder.Utils.formatTime;
+    var showToast = OmniCoder.Utils.showToast;
+    var clamp = OmniCoder.Utils.clamp;
 
     // ------------------------------------------------------------------
     // Module constants
@@ -224,12 +224,12 @@
                     }
                 });
             } catch (e) {
-                console.warn('LOME Coder: VideoFrame initialization failed', e);
+                console.warn('OmniCoder Coder: VideoFrame initialization failed', e);
                 videoFrame = null;
             }
 
             updateTimeDisplay();
-            LOME.Store.autoSave(currentProject);
+            OmniCoder.Store.autoSave(currentProject);
             showToast('Video loaded: ' + file.name);
         };
 
@@ -306,7 +306,7 @@
 
             // Behavior key mapping
             if (currentProject && currentProject.ethogram) {
-                var keyMap = LOME.Ethogram.getKeyMap(currentProject.ethogram);
+                var keyMap = OmniCoder.Ethogram.getKeyMap(currentProject.ethogram);
                 var lowerKey = key.toLowerCase();
 
                 if (keyMap[lowerKey]) {
@@ -398,8 +398,8 @@
         // 9. Export CSV button
         if (exportCsvBtn) {
             exportCsvBtn.addEventListener('click', function () {
-                if (LOME.Exporter && LOME.Exporter.exportCSV) {
-                    LOME.Exporter.exportCSV(currentProject);
+                if (OmniCoder.Exporter && OmniCoder.Exporter.exportCSV) {
+                    OmniCoder.Exporter.exportCSV(currentProject);
                 }
             });
         }
@@ -457,8 +457,8 @@
             updateTimeDisplay();
 
             // Update timeline visualization if available
-            if (LOME.Timeline && typeof LOME.Timeline.render === 'function' && videoElement) {
-                LOME.Timeline.render(
+            if (OmniCoder.Timeline && typeof OmniCoder.Timeline.render === 'function' && videoElement) {
+                OmniCoder.Timeline.render(
                     videoElement.currentTime,
                     currentProject.annotations,
                     (currentProject.ethogram && currentProject.ethogram.behaviors) || [],
@@ -624,7 +624,7 @@
         showToast(behavior.name + ' at ' + formatTime(onset));
         updateAnnotationCount();
         _triggerTimelineRedraw();
-        LOME.Store.autoSave(currentProject);
+        OmniCoder.Store.autoSave(currentProject);
     }
 
     /**
@@ -657,7 +657,7 @@
 
         showToast(behavior.name + ' started at ' + formatTime(onset));
         updateAnnotationCount();
-        LOME.Store.autoSave(currentProject);
+        OmniCoder.Store.autoSave(currentProject);
     }
 
     /**
@@ -691,7 +691,7 @@
 
         updateAnnotationCount();
         _triggerTimelineRedraw();
-        LOME.Store.autoSave(currentProject);
+        OmniCoder.Store.autoSave(currentProject);
     }
 
     // ------------------------------------------------------------------
@@ -755,14 +755,14 @@
                 break;
 
             default:
-                console.warn('LOME Coder: unknown undo action type:', action.type);
+                console.warn('OmniCoder Coder: unknown undo action type:', action.type);
                 break;
         }
 
         showToast('Undone');
         updateAnnotationCount();
         _triggerTimelineRedraw();
-        LOME.Store.autoSave(currentProject);
+        OmniCoder.Store.autoSave(currentProject);
     }
 
     // ------------------------------------------------------------------
@@ -852,8 +852,8 @@
      * Trigger a timeline redraw if the Timeline module is available.
      */
     function _triggerTimelineRedraw() {
-        if (LOME.Timeline && typeof LOME.Timeline.render === 'function' && videoElement) {
-            LOME.Timeline.render(
+        if (OmniCoder.Timeline && typeof OmniCoder.Timeline.render === 'function' && videoElement) {
+            OmniCoder.Timeline.render(
                 videoElement.currentTime || 0,
                 currentProject.annotations,
                 (currentProject.ethogram && currentProject.ethogram.behaviors) || [],
@@ -892,7 +892,7 @@
     // Public API
     // ------------------------------------------------------------------
 
-    LOME.Coder = {
+    OmniCoder.Coder = {
         // State
         get currentProject() { return currentProject; },
         set currentProject(val) { currentProject = val; },

@@ -1,11 +1,11 @@
 /**
- * LOME Utilities Module
+ * OmniCoder Utilities Module
  * Foundational helper functions used throughout the application.
  */
 (function () {
     'use strict';
 
-    window.LOME = window.LOME || {};
+    window.OmniCoder = window.OmniCoder || {};
 
     /**
      * Generate a short unique ID with a given prefix.
@@ -162,7 +162,7 @@
     }
 
     // Expose on the shared namespace
-    LOME.Utils = {
+    OmniCoder.Utils = {
         generateId: generateId,
         formatTime: formatTime,
         debounce: debounce,
