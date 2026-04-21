@@ -308,7 +308,70 @@
                     _handleSetupNext(nameInput, coderInput, nameError, coderError);
                 });
             }
+
+            // Wire up "Add Subject" button (must be after form clone)
+            var subjectList = newForm.querySelector('#subject-list');
+            var addSubjectBtn = newForm.querySelector('#btn-add-subject');
+            if (addSubjectBtn && subjectList) {
+                subjectList.innerHTML = '';
+                addSubjectBtn.addEventListener('click', function () {
+                    _addSubjectInput(subjectList);
+                });
+            }
         }
+    }
+
+    function _addSubjectInput(container) {
+        var row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.gap = '6px';
+        row.style.alignItems = 'center';
+        row.style.marginBottom = '6px';
+
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'subject-name-input';
+        input.placeholder = 'e.g. Mouse A';
+        input.style.flex = '1';
+        input.style.padding = '6px 8px';
+        input.style.border = '1px solid #ccc';
+        input.style.borderRadius = '4px';
+        input.style.fontSize = '14px';
+        row.appendChild(input);
+
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.textContent = '\u00D7';
+        removeBtn.style.padding = '4px 10px';
+        removeBtn.style.fontSize = '16px';
+        removeBtn.style.cursor = 'pointer';
+        removeBtn.style.border = '1px solid #e57373';
+        removeBtn.style.borderRadius = '4px';
+        removeBtn.style.backgroundColor = '#ffebee';
+        removeBtn.style.color = '#c62828';
+        removeBtn.style.lineHeight = '1';
+        removeBtn.addEventListener('click', function () {
+            row.parentNode.removeChild(row);
+        });
+        row.appendChild(removeBtn);
+
+        container.appendChild(row);
+        input.focus();
+    }
+
+    function _parseSubjects() {
+        var subjects = [];
+        var inputs = document.querySelectorAll('.subject-name-input');
+        for (var i = 0; i < inputs.length; i++) {
+            var name = inputs[i].value.trim();
+            if (name) {
+                subjects.push({
+                    id: EthoLogger.Utils.generateId('subj'),
+                    name: name
+                });
+            }
+        }
+        return subjects;
     }
 
     function _handleSetupNext(nameInput, coderInput, nameError, coderError) {
@@ -348,6 +411,7 @@
                 description: '',
                 behaviors: []
             },
+            subjects: _parseSubjects(),
             videoFileName: '',
             videoDuration: 0,
             annotations: [],
@@ -711,6 +775,39 @@
         }
 
         helpBody.appendChild(shortcutList);
+
+        // Section: Subject key bindings (if subjects are defined)
+        if (currentProject && currentProject.subjects && currentProject.subjects.length > 0) {
+            var subjTitle = document.createElement('h3');
+            subjTitle.textContent = 'Subject Key Bindings';
+            subjTitle.style.fontSize = '15px';
+            subjTitle.style.fontWeight = '600';
+            subjTitle.style.marginTop = '20px';
+            subjTitle.style.marginBottom = '12px';
+            helpBody.appendChild(subjTitle);
+
+            var subjList = document.createElement('ul');
+            subjList.className = 'shortcut-list';
+
+            for (var si = 0; si < currentProject.subjects.length; si++) {
+                var subj = currentProject.subjects[si];
+                var sLi = document.createElement('li');
+
+                var sDescSpan = document.createElement('span');
+                sDescSpan.className = 'shortcut-desc';
+                sDescSpan.textContent = subj.name;
+                sLi.appendChild(sDescSpan);
+
+                var sKeySpan = document.createElement('span');
+                sKeySpan.className = 'shortcut-key';
+                sKeySpan.textContent = String(si + 1);
+                sLi.appendChild(sKeySpan);
+
+                subjList.appendChild(sLi);
+            }
+
+            helpBody.appendChild(subjList);
+        }
 
         // Section: Ethogram key bindings (if a project is active)
         if (currentProject && currentProject.ethogram &&
