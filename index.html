@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOME - Behavioral Coding</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ============================================================ -->
+  <!-- Header                                                        -->
+  <!-- ============================================================ -->
+  <header id="app-header">
+    <span class="header-logo">LOME</span>
+    <nav id="breadcrumb" class="header-breadcrumb"></nav>
+    <div class="header-right">
+      <span id="header-project-info" class="header-project-info" style="display:none;"></span>
+      <button id="btn-export-project" class="header-btn" title="Export project as JSON">Export</button>
+      <button id="btn-save" class="header-btn" title="Save project">Save</button>
+      <button id="btn-help" class="header-btn" title="Keyboard shortcuts (?)">?</button>
+    </div>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- VIEW: Landing / Project Select                                -->
+  <!-- ============================================================ -->
+  <section id="view-landing" class="view active" data-breadcrumb="Home">
+    <div class="landing-hero">
+      <h1 class="landing-title">LOME</h1>
+      <p class="landing-subtitle">Local Observation &amp; Markup for Ethology</p>
+      <p class="landing-subtitle" style="font-size: 15px; margin-top: 8px;">Build an ethogram. Code animal behavior from video. Export your data.</p>
+    </div>
+    <div class="landing-actions">
+      <button id="btn-new-project" class="btn-primary btn-large">New Project</button>
+      <button id="btn-load-project" class="btn-secondary btn-large">Load Project File</button>
+    </div>
+    <div id="recent-projects"></div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- VIEW: New Project Setup                                       -->
+  <!-- ============================================================ -->
+  <section id="view-setup" class="view" data-breadcrumb="New Project">
+    <div class="setup-card">
+      <h2>Project Setup</h2>
+      <p class="text-muted">Give your project a name and identify yourself as the coder.</p>
+      <form id="setup-form">
+        <div class="form-group">
+          <label for="input-project-name">Project Name</label>
+          <input type="text" id="input-project-name" placeholder="e.g. Mouse Open Field - Batch 3" required>
+          <span id="error-project-name" class="form-error" style="display:none;"></span>
+        </div>
+        <div class="form-group">
+          <label for="input-coder-id">Your Coder ID</label>
+          <input type="text" id="input-coder-id" placeholder="e.g. Coder_A or your initials" required>
+          <span id="error-coder-id" class="form-error" style="display:none;"></span>
+        </div>
+        <div class="form-actions">
+          <button type="submit" id="btn-setup-next" class="btn-primary">Next: Build Ethogram</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- VIEW: Ethogram Builder                                        -->
+  <!-- ============================================================ -->
+  <section id="view-ethogram" class="view" data-breadcrumb="Ethogram Builder">
+    <div class="ethogram-toolbar">
+      <button id="btn-load-ethogram" class="btn-secondary btn-small">Load Ethogram JSON</button>
+      <button id="btn-load-sample" class="btn-secondary btn-small">Load Sample Ethogram</button>
+      <button id="btn-save-ethogram" class="btn-secondary btn-small">Save Ethogram JSON</button>
+    </div>
+
+    <!-- Ethogram builder UI is rendered dynamically here by ethogram.js -->
+    <div id="ethogram-content"></div>
+
+    <div class="ethogram-footer">
+      <button id="btn-ethogram-next" class="btn-primary">Next: Code Video</button>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- VIEW: Video Coding (three-panel layout)                       -->
+  <!-- ============================================================ -->
+  <section id="view-coder" class="view" data-breadcrumb="Video Coding">
+    <div class="coder-layout">
+
+      <!-- Top-left: Video Player -->
+      <div class="panel-video">
+        <div class="video-container">
+          <video id="video-player" preload="auto"></video>
+        </div>
+        <div class="video-controls">
+          <button id="btn-play-pause" class="btn-play" title="Play/Pause (Space)">Play</button>
+          <span id="video-time" class="time-display">00:00.000 / 00:00.000</span>
+          <label for="input-video-file" class="load-video-btn">Load Video</label>
+          <input type="file" id="input-video-file" accept="video/*" style="display:none;">
+        </div>
+        <div class="seek-bar-wrapper">
+          <input type="range" id="seek-bar" class="seek-bar" min="0" max="100" step="0.001" value="0">
+        </div>
+        <div class="video-controls">
+          <div class="speed-group">
+            <button data-speed="0.25">0.25x</button>
+            <button data-speed="0.5">0.5x</button>
+            <button data-speed="1" class="active">1x</button>
+            <button data-speed="1.5">1.5x</button>
+            <button data-speed="2">2x</button>
+          </div>
+          <button id="btn-frame-back" class="frame-step-btn" title="Previous frame (,)">&lt;|</button>
+          <span class="time-display">Frame</span>
+          <button id="btn-frame-fwd" class="frame-step-btn" title="Next frame (.)">|&gt;</button>
+        </div>
+      </div>
+
+      <!-- Top-right: Coding Panel -->
+      <div class="panel-coding">
+        <div class="coding-header">
+          <h3>Behaviors <span class="badge" id="annotation-count">0</span></h3>
+        </div>
+        <div class="coding-body">
+          <div id="behavior-buttons" class="behavior-buttons"></div>
+        </div>
+        <div class="coding-tools">
+          <button id="btn-undo" class="btn-secondary btn-small" title="Undo (Ctrl+Z)">Undo</button>
+          <button id="btn-export-csv" class="btn-secondary btn-small">Export CSV</button>
+        </div>
+      </div>
+
+      <!-- Bottom: Timeline -->
+      <div class="panel-timeline">
+        <canvas id="timeline-canvas"></canvas>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- VIEW: IRR Analysis (Phase 2 — placeholder)                   -->
+  <!-- ============================================================ -->
+  <section id="view-irr" class="view" data-breadcrumb="Inter-Rater Reliability">
+    <div class="irr-container">
+      <h2>Inter-Rater Reliability</h2>
+      <p class="text-muted">Coming soon. This feature will allow you to compare annotations between coders and compute Cohen's Kappa.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Help Overlay                                                  -->
+  <!-- ============================================================ -->
+  <div id="help-overlay">
+    <div class="help-backdrop"></div>
+    <div class="help-card">
+      <div class="help-card-header">
+        <h2>Keyboard Shortcuts</h2>
+        <button class="help-close" title="Close (Escape)">&times;</button>
+      </div>
+      <div id="help-body">
+        <!-- Populated dynamically by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- Hidden file inputs for JSON import                            -->
+  <!-- ============================================================ -->
+  <input type="file" id="input-import-project" accept=".json" style="display:none">
+  <input type="file" id="input-import-ethogram" accept=".json" style="display:none">
+
+  <!-- ============================================================ -->
+  <!-- Scripts: vendor first, then app modules in dependency order   -->
+  <!-- ============================================================ -->
+  <script src="vendor/papaparse.min.js"></script>
+  <script src="vendor/VideoFrame.min.js"></script>
+
+  <script src="js/utils.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ethogram.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/coder.js"></script>
+  <script src="js/exporter.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

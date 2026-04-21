@@ -1,0 +1,73 @@
+{
+  "id": "eth_mouse_01",
+  "name": "Mouse Home Cage Behavior",
+  "description": "Standard ethogram for mouse home cage behavioral observation. Includes common locomotor, maintenance, and social behaviors.",
+  "createdAt": "2026-04-21T00:00:00Z",
+  "modifiedAt": "2026-04-21T00:00:00Z",
+  "behaviors": [
+    {
+      "id": "b_loco01",
+      "name": "Locomotion",
+      "category": "Locomotion",
+      "type": "state",
+      "key": "l",
+      "color": "#2196F3"
+    },
+    {
+      "id": "b_rear01",
+      "name": "Rearing",
+      "category": "Exploration",
+      "type": "state",
+      "key": "r",
+      "color": "#00BCD4"
+    },
+    {
+      "id": "b_groom01",
+      "name": "Grooming",
+      "category": "Maintenance",
+      "type": "state",
+      "key": "g",
+      "color": "#9C27B0"
+    },
+    {
+      "id": "b_feed01",
+      "name": "Feeding",
+      "category": "Feeding",
+      "type": "state",
+      "key": "f",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "b_dig01",
+      "name": "Digging",
+      "category": "Exploration",
+      "type": "state",
+      "key": "d",
+      "color": "#795548"
+    },
+    {
+      "id": "b_rest01",
+      "name": "Resting",
+      "category": "Resting",
+      "type": "state",
+      "key": "e",
+      "color": "#607D8B"
+    },
+    {
+      "id": "b_freeze01",
+      "name": "Freezing",
+      "category": "Anxiety",
+      "type": "state",
+      "key": "z",
+      "color": "#B71C1C"
+    },
+    {
+      "id": "b_jump01",
+      "name": "Jump",
+      "category": "Locomotion",
+      "type": "point",
+      "key": "j",
+      "color": "#FF9800"
+    }
+  ]
+}
