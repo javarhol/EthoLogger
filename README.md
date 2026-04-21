@@ -4,7 +4,7 @@ A browser-based behavioral coding tool for scoring animal behavior from video. N
 
 OmniCoder is designed as a simple, modern alternative to [Solomon Coder](https://solomon.andraspeter.com/) and [CowLog](https://cowlog.org/) for undergraduate researchers.
 
-![LOME coding interface showing video player, behavior buttons, and annotation timeline](assets/screenshot.png)
+![OmniCoder coding interface showing video player, behavior buttons, and annotation timeline](assets/screenshot.png)
 
 ## Quick Start
 
@@ -96,7 +96,7 @@ Exports a standard CSV file with these columns:
 ## File Structure
 
 ```
-lome/
+omnicoder/
   index.html              Entry point
   css/style.css           Stylesheet
   js/

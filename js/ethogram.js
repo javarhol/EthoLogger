@@ -1,12 +1,12 @@
 /**
- * LOME Ethogram Module
+ * OmniCoder Ethogram Module
  * Handles ethogram building: behavior CRUD, validation, and UI rendering.
- * Depends on LOME.Utils (utils.js) and LOME.Store (store.js).
+ * Depends on OmniCoder.Utils (utils.js) and OmniCoder.Store (store.js).
  */
 (function () {
     'use strict';
 
-    window.LOME = window.LOME || {};
+    window.OmniCoder = window.OmniCoder || {};
 
     // ---------------------------------------------------------------
     // Constants
@@ -143,7 +143,7 @@
         }
 
         var behavior = {
-            id: LOME.Utils.generateId('b'),
+            id: OmniCoder.Utils.generateId('b'),
             name: data.name.trim(),
             category: (data.category || '').trim(),
             type: data.type === 'state' ? 'state' : 'point',
@@ -266,8 +266,8 @@
     }
 
     function _autoSave() {
-        if (_project && LOME.Store && LOME.Store.autoSave) {
-            LOME.Store.autoSave(_project);
+        if (_project && OmniCoder.Store && OmniCoder.Store.autoSave) {
+            OmniCoder.Store.autoSave(_project);
         }
     }
 
@@ -762,12 +762,12 @@
         if (result.ok) {
             _editingBehaviorId = null;
             _render();
-            LOME.Utils.showToast(
+            OmniCoder.Utils.showToast(
                 _editingBehaviorId ? 'Behavior updated.' : 'Behavior added.',
                 1500
             );
         } else {
-            LOME.Utils.showToast(result.error || 'Validation failed.', 2500);
+            OmniCoder.Utils.showToast(result.error || 'Validation failed.', 2500);
         }
     }
 
@@ -792,7 +792,7 @@
 
         if (confirm('Delete "' + label + '"? This cannot be undone.')) {
             removeBehavior(id);
-            LOME.Utils.showToast('Behavior deleted.', 1500);
+            OmniCoder.Utils.showToast('Behavior deleted.', 1500);
         }
     }
 
@@ -807,15 +807,15 @@
     function init(containerEl) {
         _containerEl = containerEl;
 
-        // Receive the current project from LOME.App
-        if (LOME.App && LOME.App.getCurrentProject) {
-            _project = LOME.App.getCurrentProject();
+        // Receive the current project from OmniCoder.App
+        if (OmniCoder.App && OmniCoder.App.getCurrentProject) {
+            _project = OmniCoder.App.getCurrentProject();
         }
 
         // Ensure the project has an ethogram object
         if (_project && !_project.ethogram) {
             _project.ethogram = {
-                id: LOME.Utils.generateId('eth'),
+                id: OmniCoder.Utils.generateId('eth'),
                 name: 'Untitled Ethogram',
                 description: '',
                 createdAt: new Date().toISOString(),
@@ -832,7 +832,7 @@
     // Public API
     // ---------------------------------------------------------------
 
-    LOME.Ethogram = {
+    OmniCoder.Ethogram = {
         init: init,
         createBehavior: createBehavior,
         updateBehavior: updateBehavior,

@@ -1,12 +1,12 @@
 /**
- * LOME Timeline Module
+ * OmniCoder Timeline Module
  * Canvas-based timeline renderer for behavioral annotation visualization.
- * Depends on LOME.Utils (utils.js must be loaded first).
+ * Depends on OmniCoder.Utils (utils.js must be loaded first).
  */
 (function () {
     'use strict';
 
-    window.LOME = window.LOME || {};
+    window.OmniCoder = window.OmniCoder || {};
 
     // ---------------------------------------------------------------
     // Module state
@@ -52,7 +52,7 @@
     function init(canvasId, proj) {
         canvas = document.getElementById(canvasId);
         if (!canvas) {
-            console.error('LOME Timeline: canvas element "' + canvasId + '" not found.');
+            console.error('OmniCoder Timeline: canvas element "' + canvasId + '" not found.');
             return;
         }
 
@@ -186,7 +186,7 @@
         laneHeight = canvasHeight / numLanes;
 
         // Clamp between 18px and 40px
-        laneHeight = LOME.Utils.clamp(laneHeight, 18, 40);
+        laneHeight = OmniCoder.Utils.clamp(laneHeight, 18, 40);
     }
 
     /**
@@ -568,7 +568,7 @@
         ctx.stroke();
 
         // Current time label
-        var timeLabel = LOME.Utils.formatTime(currentTime);
+        var timeLabel = OmniCoder.Utils.formatTime(currentTime);
         ctx.fillStyle = '#ff4444';
         ctx.font = 'bold 10px monospace';
         ctx.textBaseline = 'top';
@@ -645,7 +645,7 @@
         }
 
         // Clamp
-        pixelsPerSecond = LOME.Utils.clamp(pixelsPerSecond, _minPixelsPerSecond, _maxPixelsPerSecond);
+        pixelsPerSecond = OmniCoder.Utils.clamp(pixelsPerSecond, _minPixelsPerSecond, _maxPixelsPerSecond);
 
         // Adjust scrollOffset to keep the anchor time under the mouse
         scrollOffset = anchorTime - (mouseX - leftMargin) / pixelsPerSecond;
@@ -662,7 +662,7 @@
      * @param {number} level - New pixelsPerSecond value.
      */
     function setZoom(level) {
-        pixelsPerSecond = LOME.Utils.clamp(level, _minPixelsPerSecond, _maxPixelsPerSecond);
+        pixelsPerSecond = OmniCoder.Utils.clamp(level, _minPixelsPerSecond, _maxPixelsPerSecond);
         _renderCurrent();
     }
 
@@ -829,7 +829,7 @@
     // Public API
     // ---------------------------------------------------------------
 
-    LOME.Timeline = {
+    OmniCoder.Timeline = {
         // State (read access)
         get canvas() { return canvas; },
         get ctx() { return ctx; },

@@ -1,12 +1,12 @@
 /**
- * LOME Exporter Module
+ * OmniCoder Exporter Module
  * Handles CSV export of annotation data via Papa Parse.
- * Depends on LOME.Utils (utils.js) and Papa Parse (vendor/papaparse.min.js).
+ * Depends on OmniCoder.Utils (utils.js) and Papa Parse (vendor/papaparse.min.js).
  */
 (function () {
     'use strict';
 
-    window.LOME = window.LOME || {};
+    window.OmniCoder = window.OmniCoder || {};
 
     /**
      * Export a project's annotations as a CSV file download.
@@ -17,7 +17,7 @@
      */
     function exportCSV(project) {
         if (!project || !project.annotations || project.annotations.length === 0) {
-            LOME.Utils.showToast('No annotations to export');
+            OmniCoder.Utils.showToast('No annotations to export');
             return;
         }
 
@@ -42,8 +42,8 @@
                 onset_sec: ann.onset.toFixed(3),
                 offset_sec: ann.offset !== null ? ann.offset.toFixed(3) : '',
                 duration_sec: ann.offset !== null ? (ann.offset - ann.onset).toFixed(3) : '0.000',
-                onset_time: LOME.Utils.formatTime(ann.onset),
-                offset_time: ann.offset !== null ? LOME.Utils.formatTime(ann.offset) : '',
+                onset_time: OmniCoder.Utils.formatTime(ann.onset),
+                offset_time: ann.offset !== null ? OmniCoder.Utils.formatTime(ann.offset) : '',
                 behavior: behavior.name,
                 category: behavior.category,
                 type: behavior.type,
@@ -64,13 +64,13 @@
 
         // Trigger file download
         var filename = project.name + '_annotations.csv';
-        LOME.Utils.downloadFile(csv, filename, 'text/csv');
+        OmniCoder.Utils.downloadFile(csv, filename, 'text/csv');
 
-        LOME.Utils.showToast('CSV exported: ' + filename);
+        OmniCoder.Utils.showToast('CSV exported: ' + filename);
     }
 
     // Expose on the shared namespace
-    LOME.Exporter = {
+    OmniCoder.Exporter = {
         exportCSV: exportCSV
     };
 })();

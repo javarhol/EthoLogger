@@ -1,12 +1,12 @@
 /**
- * LOME App Module
+ * OmniCoder App Module
  * Application orchestrator — boot sequence, view navigation, project management.
- * This is the last script loaded. Depends on all other LOME modules.
+ * This is the last script loaded. Depends on all other OmniCoder modules.
  */
 (function () {
     'use strict';
 
-    window.LOME = window.LOME || {};
+    window.OmniCoder = window.OmniCoder || {};
 
     // ---------------------------------------------------------------
     // State
@@ -23,7 +23,7 @@
      */
     function init() {
         // Check for a last-used project (informational; landing is always shown first)
-        var settings = LOME.Store.getSettings();
+        var settings = OmniCoder.Store.getSettings();
         if (settings.lastProjectId) {
             // Could auto-resume, but we show landing for explicitness
         }
@@ -43,8 +43,8 @@
         if (saveBtn) {
             saveBtn.addEventListener('click', function () {
                 if (currentProject) {
-                    LOME.Store.saveProject(currentProject);
-                    LOME.Utils.showToast('Project saved');
+                    OmniCoder.Store.saveProject(currentProject);
+                    OmniCoder.Utils.showToast('Project saved');
                 }
             });
         }
@@ -62,7 +62,7 @@
         if (exportBtn) {
             exportBtn.addEventListener('click', function () {
                 if (currentProject) {
-                    LOME.Store.exportProjectJSON(currentProject);
+                    OmniCoder.Store.exportProjectJSON(currentProject);
                 }
             });
         }
@@ -92,7 +92,7 @@
         _cleanupCurrentView();
         currentProject = null;
         _updateHeader();
-        LOME.Utils.showView('view-landing');
+        OmniCoder.Utils.showView('view-landing');
         _renderLandingProjects();
     }
 
@@ -103,7 +103,7 @@
         var container = document.getElementById('recent-projects');
         if (!container) return;
 
-        var projects = LOME.Store.listProjects();
+        var projects = OmniCoder.Store.listProjects();
         container.innerHTML = '';
 
         if (projects.length === 0) {
@@ -215,9 +215,9 @@
             e.stopPropagation();
             var id = this.getAttribute('data-project-id');
             if (confirm('Delete this project? This cannot be undone.')) {
-                LOME.Store.deleteProject(id);
+                OmniCoder.Store.deleteProject(id);
                 _renderLandingProjects();
-                LOME.Utils.showToast('Project deleted');
+                OmniCoder.Utils.showToast('Project deleted');
             }
         });
         card.appendChild(deleteBtn);
@@ -236,12 +236,12 @@
      * @param {File} file
      */
     function _importProjectFile(file) {
-        LOME.Store.importProjectJSON(file).then(function (project) {
-            LOME.Store.saveProject(project);
+        OmniCoder.Store.importProjectJSON(file).then(function (project) {
+            OmniCoder.Store.saveProject(project);
             resumeProject(project.id);
-            LOME.Utils.showToast('Project imported: ' + project.name);
+            OmniCoder.Utils.showToast('Project imported: ' + project.name);
         })['catch'](function (err) {
-            LOME.Utils.showToast(err.message || 'Failed to import project');
+            OmniCoder.Utils.showToast(err.message || 'Failed to import project');
         });
     }
 
@@ -251,7 +251,7 @@
 
     function showSetup() {
         _cleanupCurrentView();
-        LOME.Utils.showView('view-setup');
+        OmniCoder.Utils.showView('view-setup');
 
         var nameInput = document.getElementById('input-project-name');
         var coderInput = document.getElementById('input-coder-id');
@@ -337,13 +337,13 @@
         // Create new project
         var now = new Date().toISOString();
         currentProject = {
-            id: LOME.Utils.generateId('proj'),
+            id: OmniCoder.Utils.generateId('proj'),
             name: name,
             coderId: coderId,
             createdAt: now,
             modifiedAt: now,
             ethogram: {
-                id: LOME.Utils.generateId('eth'),
+                id: OmniCoder.Utils.generateId('eth'),
                 name: name + ' Ethogram',
                 description: '',
                 behaviors: []
@@ -355,7 +355,7 @@
         };
 
         // Save to store
-        LOME.Store.saveProject(currentProject);
+        OmniCoder.Store.saveProject(currentProject);
         _updateHeader();
 
         // Navigate to ethogram builder
@@ -368,12 +368,12 @@
 
     function showEthogramBuilder() {
         _cleanupCurrentView();
-        LOME.Utils.showView('view-ethogram');
+        OmniCoder.Utils.showView('view-ethogram');
 
         // Initialize the ethogram builder UI
         var contentEl = document.getElementById('ethogram-content');
-        if (contentEl && LOME.Ethogram) {
-            LOME.Ethogram.init(contentEl);
+        if (contentEl && OmniCoder.Ethogram) {
+            OmniCoder.Ethogram.init(contentEl);
         }
 
         _wireEthogramToolbar();
@@ -404,7 +404,7 @@
             importEthInput.parentNode.replaceChild(newImportInput, importEthInput);
             newImportInput.addEventListener('change', function () {
                 if (newImportInput.files && newImportInput.files.length > 0) {
-                    LOME.Store.importEthogramJSON(newImportInput.files[0]).then(function (ethogram) {
+                    OmniCoder.Store.importEthogramJSON(newImportInput.files[0]).then(function (ethogram) {
                         if (currentProject) {
                             currentProject.ethogram.behaviors = ethogram.behaviors;
                             if (ethogram.name) {
@@ -413,16 +413,16 @@
                             if (ethogram.description !== undefined) {
                                 currentProject.ethogram.description = ethogram.description;
                             }
-                            LOME.Store.saveProject(currentProject);
+                            OmniCoder.Store.saveProject(currentProject);
                             // Re-init ethogram UI
                             var contentEl = document.getElementById('ethogram-content');
-                            if (contentEl && LOME.Ethogram) {
-                                LOME.Ethogram.init(contentEl);
+                            if (contentEl && OmniCoder.Ethogram) {
+                                OmniCoder.Ethogram.init(contentEl);
                             }
-                            LOME.Utils.showToast('Ethogram loaded: ' + (ethogram.name || 'imported'));
+                            OmniCoder.Utils.showToast('Ethogram loaded: ' + (ethogram.name || 'imported'));
                         }
                     })['catch'](function (err) {
-                        LOME.Utils.showToast(err.message || 'Failed to import ethogram');
+                        OmniCoder.Utils.showToast(err.message || 'Failed to import ethogram');
                     });
                 }
             });
@@ -445,7 +445,7 @@
             saveEthBtn.parentNode.replaceChild(newSaveBtn, saveEthBtn);
             newSaveBtn.addEventListener('click', function () {
                 if (currentProject && currentProject.ethogram) {
-                    LOME.Store.exportEthogramJSON(currentProject.ethogram);
+                    OmniCoder.Store.exportEthogramJSON(currentProject.ethogram);
                 }
             });
         }
@@ -459,7 +459,7 @@
                 if (!currentProject || !currentProject.ethogram ||
                     !currentProject.ethogram.behaviors ||
                     currentProject.ethogram.behaviors.length === 0) {
-                    LOME.Utils.showToast('Please add at least one behavior before continuing.');
+                    OmniCoder.Utils.showToast('Please add at least one behavior before continuing.');
                     return;
                 }
                 showCoder();
@@ -483,7 +483,7 @@
                 try {
                     var ethogram = JSON.parse(xhr.responseText);
                     if (!ethogram.behaviors || !Array.isArray(ethogram.behaviors)) {
-                        LOME.Utils.showToast('Invalid sample ethogram: missing behaviors array.');
+                        OmniCoder.Utils.showToast('Invalid sample ethogram: missing behaviors array.');
                         return;
                     }
 
@@ -495,25 +495,25 @@
                         if (ethogram.description !== undefined) {
                             currentProject.ethogram.description = ethogram.description;
                         }
-                        LOME.Store.saveProject(currentProject);
+                        OmniCoder.Store.saveProject(currentProject);
 
                         // Re-init ethogram UI
                         var contentEl = document.getElementById('ethogram-content');
-                        if (contentEl && LOME.Ethogram) {
-                            LOME.Ethogram.init(contentEl);
+                        if (contentEl && OmniCoder.Ethogram) {
+                            OmniCoder.Ethogram.init(contentEl);
                         }
-                        LOME.Utils.showToast('Sample ethogram loaded');
+                        OmniCoder.Utils.showToast('Sample ethogram loaded');
                     }
                 } catch (e) {
-                    LOME.Utils.showToast('Failed to parse sample ethogram: ' + e.message);
+                    OmniCoder.Utils.showToast('Failed to parse sample ethogram: ' + e.message);
                 }
             } else {
-                LOME.Utils.showToast('Failed to load sample ethogram (HTTP ' + xhr.status + ').');
+                OmniCoder.Utils.showToast('Failed to load sample ethogram (HTTP ' + xhr.status + ').');
             }
         };
 
         xhr.onerror = function () {
-            LOME.Utils.showToast(
+            OmniCoder.Utils.showToast(
                 'Could not load sample ethogram. If using file:// protocol, ' +
                 'try opening Chrome with --allow-file-access-from-files flag, ' +
                 'or manually load the file via "Load Ethogram JSON".'
@@ -529,16 +529,16 @@
 
     function showCoder() {
         _cleanupCurrentView();
-        LOME.Utils.showView('view-coder');
+        OmniCoder.Utils.showView('view-coder');
 
         // Initialize the coder module
-        if (LOME.Coder && currentProject) {
-            LOME.Coder.init(currentProject);
+        if (OmniCoder.Coder && currentProject) {
+            OmniCoder.Coder.init(currentProject);
         }
 
         // Initialize the timeline module
-        if (LOME.Timeline && currentProject) {
-            LOME.Timeline.init('timeline-canvas', currentProject);
+        if (OmniCoder.Timeline && currentProject) {
+            OmniCoder.Timeline.init('timeline-canvas', currentProject);
         }
 
         // Wire up export CSV button in coder view
@@ -547,15 +547,15 @@
             var newExportBtn = exportBtn.cloneNode(true);
             exportBtn.parentNode.replaceChild(newExportBtn, exportBtn);
             newExportBtn.addEventListener('click', function () {
-                if (currentProject && LOME.Exporter) {
-                    LOME.Exporter.exportCSV(currentProject);
+                if (currentProject && OmniCoder.Exporter) {
+                    OmniCoder.Exporter.exportCSV(currentProject);
                 }
             });
         }
 
         // Update settings with lastProjectId
         if (currentProject) {
-            LOME.Store.updateSettings({ lastProjectId: currentProject.id });
+            OmniCoder.Store.updateSettings({ lastProjectId: currentProject.id });
         }
 
         _updateHeader();
@@ -570,9 +570,9 @@
      * @param {string} id - Project ID.
      */
     function resumeProject(id) {
-        var project = LOME.Store.loadProject(id);
+        var project = OmniCoder.Store.loadProject(id);
         if (!project) {
-            LOME.Utils.showToast('Project not found');
+            OmniCoder.Utils.showToast('Project not found');
             return;
         }
 
@@ -607,13 +607,13 @@
      */
     function _cleanupCurrentView() {
         // Destroy coder if it exists (stops playback, removes listeners)
-        if (LOME.Coder && typeof LOME.Coder.destroy === 'function') {
-            LOME.Coder.destroy();
+        if (OmniCoder.Coder && typeof OmniCoder.Coder.destroy === 'function') {
+            OmniCoder.Coder.destroy();
         }
 
         // Destroy timeline if it exists
-        if (LOME.Timeline && typeof LOME.Timeline.destroy === 'function') {
-            LOME.Timeline.destroy();
+        if (OmniCoder.Timeline && typeof OmniCoder.Timeline.destroy === 'function') {
+            OmniCoder.Timeline.destroy();
         }
     }
 
@@ -822,7 +822,7 @@
         return currentProject;
     }
 
-    LOME.App = {
+    OmniCoder.App = {
         init: init,
         showLanding: showLanding,
         showSetup: showSetup,
@@ -839,5 +839,5 @@
 // Boot
 // ---------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', function () {
-    LOME.App.init();
+    OmniCoder.App.init();
 });
