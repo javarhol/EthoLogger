@@ -1,8 +1,8 @@
-# LOME - Local Observation & Markup for Ethology
+# OmniCoder
 
 A browser-based behavioral coding tool for scoring animal behavior from video. No installation required — just open `index.html` in Chrome.
 
-LOME is designed as a simple, modern alternative to [Solomon Coder](https://solomon.andraspeter.com/) and [CowLog](https://cowlog.org/) for undergraduate researchers.
+OmniCoder is designed as a simple, modern alternative to [Solomon Coder](https://solomon.andraspeter.com/) and [CowLog](https://cowlog.org/) for undergraduate researchers.
 
 ![LOME coding interface showing video player, behavior buttons, and annotation timeline](assets/screenshot.png)
 
