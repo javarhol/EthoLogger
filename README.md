@@ -2,18 +2,19 @@
 
 A browser-based behavioral coding tool for scoring animal behavior from video. No installation required — just open `index.html` in Chrome.
 
-LOME is designed as a simple, free alternative to [Solomon Coder](https://solomon.andraspeter.com/) and [CowLog](https://cowlog.org/) for undergraduate researchers.
+LOME is designed as a simple, modern alternative to [Solomon Coder](https://solomon.andraspeter.com/) and [CowLog](https://cowlog.org/) for undergraduate researchers.
 
 ![LOME coding interface showing video player, behavior buttons, and annotation timeline](assets/screenshot.png)
 
 ## Quick Start
 
-1. Open `index.html` in **Google Chrome** (double-click the file)
-2. Click **New Project** and enter a project name + your coder ID
-3. Build your ethogram (define behaviors) or click **Load Sample Ethogram** for a pre-made mouse behavior set
-4. Click **Next: Code Video** and load an MP4 video file
-5. Press keyboard shortcuts to code behaviors as the video plays
-6. Click **Export CSV** when finished
+1. Clone the repository
+2. Open `index.html` in **Google Chrome** (double-click the file)
+3. Click **New Project** and enter a project name + your coder ID
+4. Build your ethogram (define behaviors) or click **Load Sample Ethogram** for a pre-made mouse behavior set
+5. Click **Next: Code Video** and load an MP4 video file
+6. Press keyboard shortcuts to code behaviors as the video plays
+7. Click **Export CSV** when finished
 
 ## Features
 
