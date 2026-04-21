@@ -1,6 +1,6 @@
 # OmniCoder
 
-A browser-based behavioral coding tool for scoring animal behavior from video. No installation required — just open `index.html` in Chrome.
+A browser-based behavioral coding tool for scoring animal behavior from video. No installation required — just open the github page or clone the repository and open `index.html` in Chrome
 
 OmniCoder is designed as a simple, modern alternative to [Solomon Coder](https://solomon.andraspeter.com/) and [CowLog](https://cowlog.org/) for undergraduate researchers.
 
