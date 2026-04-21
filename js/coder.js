@@ -38,6 +38,8 @@
 
     var currentProject = null;
     var activeStates = {};
+    var activeSubjectId = null;
+    var _modifierPopupOpen = false;
     var videoElement = null;
     var videoFrame = null;
     var isPlaying = false;
@@ -102,8 +104,19 @@
         exportCsvBtn = document.getElementById('btn-export-csv');
         helpOverlay = document.getElementById('help-overlay');
 
+        // ---- Reset subject state ----
+        activeSubjectId = null;
+        _modifierPopupOpen = false;
+        var subjects = currentProject.subjects || [];
+        if (subjects.length > 0) {
+            activeSubjectId = subjects[0].id;
+        }
+
         // ---- Generate behavior buttons ----
         _renderBehaviorButtons();
+
+        // ---- Render subject selector ----
+        _renderSubjectSelector();
 
         // ---- Set up all event listeners ----
         setupEventListeners();
@@ -165,6 +178,210 @@
     }
 
     // ------------------------------------------------------------------
+    // Subject selector
+    // ------------------------------------------------------------------
+
+    function _stateKey(behaviorId, subjectId) {
+        return behaviorId + '__' + (subjectId || '');
+    }
+
+    function _renderSubjectSelector() {
+        var container = document.getElementById('subject-selector');
+        if (!container) return;
+
+        var subjects = (currentProject && currentProject.subjects) || [];
+        if (subjects.length === 0) {
+            container.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+
+        container.style.display = '';
+        container.innerHTML = '';
+
+        var label = document.createElement('span');
+        label.style.fontSize = '11px';
+        label.style.textTransform = 'uppercase';
+        label.style.color = '#888';
+        label.style.marginRight = '4px';
+        label.textContent = 'Subject:';
+        container.appendChild(label);
+
+        for (var i = 0; i < subjects.length; i++) {
+            var subj = subjects[i];
+            var btn = document.createElement('button');
+            btn.className = 'subject-btn' + (subj.id === activeSubjectId ? ' active' : '');
+            btn.setAttribute('data-subject-id', subj.id);
+            btn.textContent = (i + 1) + '. ' + subj.name;
+            btn.title = 'Press ' + (i + 1) + ' to select';
+            (function (sid) {
+                btn.addEventListener('click', function () {
+                    _setActiveSubject(sid);
+                });
+            })(subj.id);
+            container.appendChild(btn);
+        }
+    }
+
+    function _setActiveSubject(subjectId) {
+        activeSubjectId = subjectId;
+        var buttons = document.querySelectorAll('.subject-btn');
+        for (var i = 0; i < buttons.length; i++) {
+            if (buttons[i].getAttribute('data-subject-id') === subjectId) {
+                buttons[i].classList.add('active');
+            } else {
+                buttons[i].classList.remove('active');
+            }
+        }
+        var subjects = (currentProject && currentProject.subjects) || [];
+        for (var j = 0; j < subjects.length; j++) {
+            if (subjects[j].id === subjectId) {
+                showToast('Subject: ' + subjects[j].name);
+                break;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Modifier popup
+    // ------------------------------------------------------------------
+
+    function _showModifierPopup(behavior, onset) {
+        _modifierPopupOpen = true;
+
+        // Pause video while selecting modifiers
+        if (videoElement && !videoElement.paused) {
+            videoElement.pause();
+            if (playPauseBtn) playPauseBtn.textContent = 'Play';
+            isPlaying = false;
+            stopRenderLoop();
+        }
+
+        var popup = document.createElement('div');
+        popup.id = 'modifier-popup';
+        popup.className = 'modifier-popup';
+
+        var title = document.createElement('div');
+        title.className = 'modifier-popup-title';
+        title.textContent = behavior.name + ' \u2014 Select Modifiers';
+        popup.appendChild(title);
+
+        var modSets = behavior.modifiers;
+        for (var i = 0; i < modSets.length; i++) {
+            var modSet = modSets[i];
+            var row = document.createElement('div');
+            row.className = 'modifier-popup-row';
+
+            var rowLabel = document.createElement('div');
+            rowLabel.style.fontSize = '11px';
+            rowLabel.style.textTransform = 'uppercase';
+            rowLabel.style.color = '#888';
+            rowLabel.style.marginBottom = '4px';
+            rowLabel.textContent = modSet.name;
+            row.appendChild(rowLabel);
+
+            var optGroup = document.createElement('div');
+            optGroup.className = 'modifier-option-group';
+            optGroup.setAttribute('data-modifier-id', modSet.id);
+
+            for (var j = 0; j < modSet.options.length; j++) {
+                var optBtn = document.createElement('button');
+                optBtn.type = 'button';
+                optBtn.className = 'modifier-option-btn';
+                optBtn.textContent = (j + 1) + '. ' + modSet.options[j];
+                optBtn.setAttribute('data-value', modSet.options[j]);
+                (function (optGroup, value) {
+                    optBtn.addEventListener('click', function () {
+                        var siblings = optGroup.querySelectorAll('.modifier-option-btn');
+                        for (var k = 0; k < siblings.length; k++) {
+                            siblings[k].classList.remove('selected');
+                        }
+                        this.classList.add('selected');
+                    });
+                })(optGroup, modSet.options[j]);
+                optGroup.appendChild(optBtn);
+            }
+
+            row.appendChild(optGroup);
+            popup.appendChild(row);
+        }
+
+        var actions = document.createElement('div');
+        actions.className = 'modifier-popup-actions';
+
+        var confirmBtn = document.createElement('button');
+        confirmBtn.textContent = 'Confirm';
+        confirmBtn.className = 'btn-primary btn-small';
+        confirmBtn.style.padding = '6px 16px';
+        confirmBtn.style.fontSize = '13px';
+        confirmBtn.style.border = 'none';
+        confirmBtn.style.borderRadius = '4px';
+        confirmBtn.style.cursor = 'pointer';
+        confirmBtn.style.color = '#fff';
+        confirmBtn.style.backgroundColor = '#4CAF50';
+        confirmBtn.addEventListener('click', function () {
+            var values = _collectModifierValues(popup);
+            _removeModifierPopup();
+            _executeCodingAction(behavior, onset, values);
+        });
+        actions.appendChild(confirmBtn);
+
+        var cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.style.padding = '6px 16px';
+        cancelBtn.style.fontSize = '13px';
+        cancelBtn.style.cursor = 'pointer';
+        cancelBtn.style.border = '1px solid #ccc';
+        cancelBtn.style.borderRadius = '4px';
+        cancelBtn.style.backgroundColor = '#f8f8f8';
+        cancelBtn.addEventListener('click', function () {
+            _removeModifierPopup();
+        });
+        actions.appendChild(cancelBtn);
+        popup.appendChild(actions);
+
+        var codingPanel = document.querySelector('.panel-coding');
+        if (codingPanel) {
+            codingPanel.style.position = 'relative';
+            codingPanel.appendChild(popup);
+        }
+    }
+
+    function _collectModifierValues(popup) {
+        var values = {};
+        var groups = popup.querySelectorAll('.modifier-option-group');
+        for (var i = 0; i < groups.length; i++) {
+            var modId = groups[i].getAttribute('data-modifier-id');
+            var selected = groups[i].querySelector('.modifier-option-btn.selected');
+            if (selected) {
+                values[modId] = selected.getAttribute('data-value');
+            }
+        }
+        return values;
+    }
+
+    function _removeModifierPopup() {
+        _modifierPopupOpen = false;
+        var popup = document.getElementById('modifier-popup');
+        if (popup && popup.parentNode) {
+            popup.parentNode.removeChild(popup);
+        }
+    }
+
+    function _executeCodingAction(behavior, onset, modifierValues) {
+        if (behavior.type === 'point') {
+            _codePointEvent(behavior, onset, modifierValues);
+        } else if (behavior.type === 'state') {
+            var sk = _stateKey(behavior.id, activeSubjectId);
+            if (!activeStates[sk]) {
+                _startStateEvent(behavior, onset, modifierValues);
+            } else {
+                _stopStateEvent(behavior, videoElement.currentTime);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Re-activate open states
     // ------------------------------------------------------------------
 
@@ -180,7 +397,8 @@
         for (var i = 0; i < annotations.length; i++) {
             var ann = annotations[i];
             if (ann.type === 'state' && ann.offset === null) {
-                activeStates[ann.behaviorId] = ann;
+                var sk = _stateKey(ann.behaviorId, ann.subjectId || null);
+                activeStates[sk] = ann;
 
                 var btn = getButtonForBehavior(ann.behaviorId);
                 if (btn) {
@@ -254,6 +472,49 @@
                 return;
             }
 
+            // Handle modifier popup keyboard interaction
+            if (_modifierPopupOpen) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    _removeModifierPopup();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var confirmBtn = document.querySelector('#modifier-popup .btn-primary');
+                    if (confirmBtn) confirmBtn.click();
+                } else {
+                    // Number keys select options in the focused modifier set
+                    var digit = parseInt(e.key, 10);
+                    if (digit >= 1 && digit <= 9) {
+                        e.preventDefault();
+                        var groups = document.querySelectorAll('#modifier-popup .modifier-option-group');
+                        // Find the first group without a selection, or the last group
+                        for (var gi = 0; gi < groups.length; gi++) {
+                            var selected = groups[gi].querySelector('.modifier-option-btn.selected');
+                            if (!selected) {
+                                var btns = groups[gi].querySelectorAll('.modifier-option-btn');
+                                if (digit <= btns.length) {
+                                    btns[digit - 1].click();
+                                }
+                                // Auto-confirm if all groups now have selections
+                                var allSelected = true;
+                                for (var gj = 0; gj < groups.length; gj++) {
+                                    if (!groups[gj].querySelector('.modifier-option-btn.selected')) {
+                                        allSelected = false;
+                                        break;
+                                    }
+                                }
+                                if (allSelected) {
+                                    var confirmBtn2 = document.querySelector('#modifier-popup .btn-primary');
+                                    if (confirmBtn2) confirmBtn2.click();
+                                }
+                                return;
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+
             var isMod = e.ctrlKey || e.metaKey;
             var isAlt = e.altKey;
 
@@ -302,6 +563,17 @@
                         helpOverlay.classList.toggle('active');
                     }
                     return;
+            }
+
+            // Subject switching: number keys 1-9
+            var subjects = (currentProject && currentProject.subjects) || [];
+            if (subjects.length > 0) {
+                var subjectIndex = parseInt(key, 10);
+                if (subjectIndex >= 1 && subjectIndex <= subjects.length) {
+                    e.preventDefault();
+                    _setActiveSubject(subjects[subjectIndex - 1].id);
+                    return;
+                }
             }
 
             // Behavior key mapping
@@ -580,28 +852,63 @@
         if (!behavior || !behavior.id) return;
 
         var onset = videoElement.currentTime;
+        var hasModifiers = behavior.modifiers && behavior.modifiers.length > 0;
 
-        if (behavior.type === 'point') {
-            _codePointEvent(behavior, onset);
-        } else if (behavior.type === 'state') {
-            if (!activeStates[behavior.id]) {
-                _startStateEvent(behavior, onset);
-            } else {
+        // For state events being stopped, no modifier popup needed
+        if (behavior.type === 'state') {
+            var sk = _stateKey(behavior.id, activeSubjectId);
+            if (activeStates[sk]) {
                 _stopStateEvent(behavior, videoElement.currentTime);
+                return;
             }
         }
+
+        if (hasModifiers) {
+            _showModifierPopup(behavior, onset);
+        } else {
+            _executeCodingAction(behavior, onset, {});
+        }
+    }
+
+    /**
+     * Get a display label for the current subject, or empty string if none.
+     */
+    function _subjectLabel() {
+        if (!activeSubjectId || !currentProject || !currentProject.subjects) return '';
+        var subjects = currentProject.subjects;
+        for (var i = 0; i < subjects.length; i++) {
+            if (subjects[i].id === activeSubjectId) return ' [' + subjects[i].name + ']';
+        }
+        return '';
+    }
+
+    /**
+     * Format modifier values for toast display.
+     */
+    function _modifierLabel(behavior, modValues) {
+        if (!modValues || !behavior.modifiers) return '';
+        var parts = [];
+        for (var i = 0; i < behavior.modifiers.length; i++) {
+            var ms = behavior.modifiers[i];
+            if (modValues[ms.id]) {
+                parts.push(ms.name + ': ' + modValues[ms.id]);
+            }
+        }
+        return parts.length > 0 ? ' (' + parts.join(', ') + ')' : '';
     }
 
     /**
      * Record a point event annotation.
      */
-    function _codePointEvent(behavior, onset) {
+    function _codePointEvent(behavior, onset, modifierValues) {
         var ann = {
             id: generateId('ann'),
             behaviorId: behavior.id,
             type: 'point',
             onset: onset,
             offset: null,
+            subjectId: activeSubjectId,
+            modifiers: modifierValues || {},
             createdAt: new Date().toISOString()
         };
 
@@ -621,7 +928,7 @@
             }, POINT_FLASH_DURATION);
         }
 
-        showToast(behavior.name + ' at ' + formatTime(onset));
+        showToast(behavior.name + _modifierLabel(behavior, modifierValues) + _subjectLabel() + ' at ' + formatTime(onset));
         updateAnnotationCount();
         _triggerTimelineRedraw();
         EthoLogger.Store.autoSave(currentProject);
@@ -630,18 +937,21 @@
     /**
      * Start recording a state event (onset).
      */
-    function _startStateEvent(behavior, onset) {
+    function _startStateEvent(behavior, onset, modifierValues) {
         var ann = {
             id: generateId('ann'),
             behaviorId: behavior.id,
             type: 'state',
             onset: onset,
             offset: null,
+            subjectId: activeSubjectId,
+            modifiers: modifierValues || {},
             createdAt: new Date().toISOString()
         };
 
         currentProject.annotations.push(ann);
-        activeStates[behavior.id] = ann;
+        var sk = _stateKey(behavior.id, activeSubjectId);
+        activeStates[sk] = ann;
 
         // Highlight the button to show recording is in progress
         var btn = getButtonForBehavior(behavior.id);
@@ -652,10 +962,11 @@
         _pushUndo({
             type: 'start_state',
             annotationId: ann.id,
-            behaviorId: behavior.id
+            behaviorId: behavior.id,
+            subjectId: activeSubjectId
         });
 
-        showToast(behavior.name + ' started at ' + formatTime(onset));
+        showToast(behavior.name + _modifierLabel(behavior, modifierValues) + _subjectLabel() + ' started at ' + formatTime(onset));
         updateAnnotationCount();
         EthoLogger.Store.autoSave(currentProject);
     }
@@ -664,11 +975,12 @@
      * Stop recording a state event (set offset).
      */
     function _stopStateEvent(behavior, offset) {
-        var ann = activeStates[behavior.id];
+        var sk = _stateKey(behavior.id, activeSubjectId);
+        var ann = activeStates[sk];
         if (!ann) return;
 
         ann.offset = offset;
-        delete activeStates[behavior.id];
+        delete activeStates[sk];
 
         // Remove highlight from button
         var btn = getButtonForBehavior(behavior.id);
@@ -679,12 +991,13 @@
         _pushUndo({
             type: 'stop_state',
             annotationId: ann.id,
-            behaviorId: behavior.id
+            behaviorId: behavior.id,
+            subjectId: activeSubjectId
         });
 
         var duration = (ann.offset - ann.onset).toFixed(2);
         showToast(
-            behavior.name + ': ' +
+            behavior.name + _subjectLabel() + ': ' +
             formatTime(ann.onset) + ' \u2192 ' + formatTime(ann.offset) +
             ' (' + duration + 's)'
         );
@@ -734,7 +1047,8 @@
 
             case 'start_state':
                 _removeAnnotationById(action.annotationId);
-                delete activeStates[action.behaviorId];
+                var undoSk1 = _stateKey(action.behaviorId, action.subjectId || null);
+                delete activeStates[undoSk1];
                 var startBtn = getButtonForBehavior(action.behaviorId);
                 if (startBtn) {
                     startBtn.classList.remove('active');
@@ -746,7 +1060,8 @@
                 var ann = _findAnnotationById(action.annotationId);
                 if (ann) {
                     ann.offset = null;
-                    activeStates[action.behaviorId] = ann;
+                    var undoSk2 = _stateKey(action.behaviorId, action.subjectId || null);
+                    activeStates[undoSk2] = ann;
                     var stopBtn = getButtonForBehavior(action.behaviorId);
                     if (stopBtn) {
                         stopBtn.classList.add('active');
@@ -883,6 +1198,10 @@
 
         // Clear active states
         activeStates = {};
+        activeSubjectId = null;
+
+        // Remove any open modifier popup
+        _removeModifierPopup();
 
         // Reset playing state
         isPlaying = false;

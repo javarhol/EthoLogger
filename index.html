@@ -56,6 +56,12 @@
           <input type="text" id="input-coder-id" placeholder="e.g. Coder_A or your initials" required>
           <span id="error-coder-id" class="form-error" style="display:none;"></span>
         </div>
+        <div class="form-group">
+          <label>Subjects <span style="font-weight:normal; color:#888;">(optional)</span></label>
+          <p class="text-muted" style="font-size:12px; margin:0 0 8px;">Define subjects if coding multiple animals. Leave empty for single-subject coding.</p>
+          <div id="subject-list"></div>
+          <button type="button" id="btn-add-subject" class="btn-secondary btn-small" style="margin-top:6px;">+ Add Subject</button>
+        </div>
         <div class="form-actions">
           <button type="submit" id="btn-setup-next" class="btn-primary">Next: Build Ethogram</button>
         </div>
@@ -119,6 +125,7 @@
       <div class="panel-coding">
         <div class="coding-header">
           <h3>Behaviors <span class="badge" id="annotation-count">0</span></h3>
+          <div id="subject-selector" class="subject-selector" style="display:none;"></div>
         </div>
         <div class="coding-body">
           <div id="behavior-buttons" class="behavior-buttons"></div>

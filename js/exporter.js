@@ -28,6 +28,26 @@
             behaviorMap[behaviors[i].id] = behaviors[i];
         }
 
+        // Build a lookup map from subject ID to subject object
+        var subjectMap = {};
+        var subjects = project.subjects || [];
+        for (var si = 0; si < subjects.length; si++) {
+            subjectMap[subjects[si].id] = subjects[si];
+        }
+
+        // Collect all unique modifier set names across all behaviors (for column headers)
+        var modifierSetNames = [];
+        var modSetNamesSeen = {};
+        for (var mi = 0; mi < behaviors.length; mi++) {
+            var bMods = behaviors[mi].modifiers || [];
+            for (var mj = 0; mj < bMods.length; mj++) {
+                if (!modSetNamesSeen[bMods[mj].name]) {
+                    modSetNamesSeen[bMods[mj].name] = true;
+                    modifierSetNames.push(bMods[mj].name);
+                }
+            }
+        }
+
         // Transform annotations into flat row objects
         var rows = [];
         for (var j = 0; j < project.annotations.length; j++) {
@@ -35,8 +55,11 @@
             var behavior = behaviorMap[ann.behaviorId] || {
                 name: 'Unknown',
                 category: '',
-                type: ''
+                type: '',
+                modifiers: []
             };
+
+            var subject = ann.subjectId ? (subjectMap[ann.subjectId] || { name: '' }) : { name: '' };
 
             var row = {
                 onset_sec: ann.onset.toFixed(3),
@@ -47,9 +70,25 @@
                 behavior: behavior.name,
                 category: behavior.category,
                 type: behavior.type,
-                coder_id: project.coderId,
-                video_file: project.videoFileName || ''
+                subject: subject.name
             };
+
+            // Add modifier columns
+            for (var mk = 0; mk < modifierSetNames.length; mk++) {
+                var setName = modifierSetNames[mk];
+                var colKey = 'modifier_' + setName.toLowerCase().replace(/\s+/g, '_');
+                var value = '';
+                var behMods = behavior.modifiers || [];
+                for (var ml = 0; ml < behMods.length; ml++) {
+                    if (behMods[ml].name === setName && ann.modifiers && ann.modifiers[behMods[ml].id]) {
+                        value = ann.modifiers[behMods[ml].id];
+                    }
+                }
+                row[colKey] = value;
+            }
+
+            row.coder_id = project.coderId;
+            row.video_file = project.videoFileName || '';
 
             rows.push(row);
         }

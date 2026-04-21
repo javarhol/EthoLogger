@@ -18,7 +18,8 @@
         '#607D8B', '#795548', '#8BC34A', '#3F51B5'
     ];
 
-    var RESERVED_KEYS = [' ', ',', '.', '?', '[', ']', 'arrowleft', 'arrowright'];
+    var RESERVED_KEYS = [' ', ',', '.', '?', '[', ']', 'arrowleft', 'arrowright',
+        '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
 
     var CATEGORY_SUGGESTIONS = [
         'Locomotion', 'Maintenance', 'Social', 'Feeding',
@@ -148,7 +149,8 @@
             category: (data.category || '').trim(),
             type: data.type === 'state' ? 'state' : 'point',
             key: data.key.toLowerCase(),
-            color: data.color
+            color: data.color,
+            modifiers: data.modifiers || []
         };
 
         _project.ethogram.behaviors.push(behavior);
@@ -203,6 +205,7 @@
         if (data.hasOwnProperty('type')) behavior.type = data.type === 'state' ? 'state' : 'point';
         if (data.hasOwnProperty('key')) behavior.key = data.key.toLowerCase();
         if (data.hasOwnProperty('color')) behavior.color = data.color;
+        if (data.hasOwnProperty('modifiers')) behavior.modifiers = data.modifiers;
 
         _render();
         _autoSave();
@@ -345,7 +348,7 @@
         // Header row
         var thead = document.createElement('thead');
         var headerRow = document.createElement('tr');
-        var headers = ['Color', 'Key', 'Name', 'Category', 'Type', 'Actions'];
+        var headers = ['Color', 'Key', 'Name', 'Category', 'Type', 'Modifiers', 'Actions'];
         for (var h = 0; h < headers.length; h++) {
             var th = document.createElement('th');
             th.textContent = headers[h];
@@ -433,6 +436,23 @@
             }
             tdType.appendChild(typeBadge);
             row.appendChild(tdType);
+
+            // Modifiers
+            var tdMod = document.createElement('td');
+            tdMod.style.padding = '8px 12px';
+            tdMod.style.color = '#666';
+            tdMod.style.fontSize = '12px';
+            var mods = b.modifiers || [];
+            if (mods.length === 0) {
+                tdMod.textContent = '--';
+            } else {
+                var modParts = [];
+                for (var mi = 0; mi < mods.length; mi++) {
+                    modParts.push(mods[mi].name + '(' + mods[mi].options.length + ')');
+                }
+                tdMod.textContent = modParts.join(', ');
+            }
+            row.appendChild(tdMod);
 
             // Actions
             var tdActions = document.createElement('td');
@@ -649,6 +669,53 @@
         colorGroup.appendChild(colorInput);
         form.appendChild(colorGroup);
 
+        // Modifiers section
+        var modSection = document.createElement('div');
+        modSection.className = 'modifier-editor';
+        modSection.style.flex = '1 1 100%';
+
+        var modLabel = document.createElement('label');
+        modLabel.textContent = 'Modifiers';
+        modLabel.style.display = 'block';
+        modLabel.style.fontSize = '12px';
+        modLabel.style.fontWeight = '600';
+        modLabel.style.marginBottom = '6px';
+        modLabel.style.color = '#555';
+        modSection.appendChild(modLabel);
+
+        var modHint = document.createElement('p');
+        modHint.style.fontSize = '11px';
+        modHint.style.color = '#888';
+        modHint.style.margin = '0 0 8px';
+        modHint.textContent = 'Optional. Add modifier sets (e.g. Target: self, other, object).';
+        modSection.appendChild(modHint);
+
+        var modList = document.createElement('div');
+        modList.className = 'modifier-set-list';
+        modSection.appendChild(modList);
+
+        // Populate existing modifiers
+        var existingMods = (isEdit && editingBehavior.modifiers) ? editingBehavior.modifiers : [];
+        for (var m = 0; m < existingMods.length; m++) {
+            _appendModifierRow(modList, existingMods[m].name, existingMods[m].options.join(', '));
+        }
+
+        var addModBtn = document.createElement('button');
+        addModBtn.type = 'button';
+        addModBtn.textContent = '+ Add Modifier Set';
+        addModBtn.style.padding = '4px 10px';
+        addModBtn.style.fontSize = '12px';
+        addModBtn.style.cursor = 'pointer';
+        addModBtn.style.border = '1px solid #ccc';
+        addModBtn.style.borderRadius = '4px';
+        addModBtn.style.backgroundColor = '#f8f8f8';
+        addModBtn.style.marginTop = '4px';
+        addModBtn.addEventListener('click', function () {
+            _appendModifierRow(modList, '', '');
+        });
+        modSection.appendChild(addModBtn);
+        form.appendChild(modSection);
+
         // Buttons
         var btnGroup = document.createElement('div');
         btnGroup.className = 'form-group';
@@ -734,6 +801,81 @@
     }
 
     // ---------------------------------------------------------------
+    // Modifier helpers
+    // ---------------------------------------------------------------
+
+    function _appendModifierRow(container, nameVal, optionsVal) {
+        var row = document.createElement('div');
+        row.className = 'modifier-set-row';
+        row.style.display = 'flex';
+        row.style.gap = '8px';
+        row.style.alignItems = 'center';
+        row.style.marginBottom = '6px';
+
+        var nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'modifier-set-name';
+        nameInput.placeholder = 'Set name (e.g. Target)';
+        nameInput.value = nameVal || '';
+        nameInput.style.flex = '0 0 140px';
+        nameInput.style.padding = '4px 8px';
+        nameInput.style.fontSize = '13px';
+        nameInput.style.border = '1px solid #ccc';
+        nameInput.style.borderRadius = '4px';
+        row.appendChild(nameInput);
+
+        var optInput = document.createElement('input');
+        optInput.type = 'text';
+        optInput.className = 'modifier-set-options';
+        optInput.placeholder = 'Options (comma-separated)';
+        optInput.value = optionsVal || '';
+        optInput.style.flex = '1';
+        optInput.style.padding = '4px 8px';
+        optInput.style.fontSize = '13px';
+        optInput.style.border = '1px solid #ccc';
+        optInput.style.borderRadius = '4px';
+        row.appendChild(optInput);
+
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.textContent = '\u00D7';
+        removeBtn.style.padding = '2px 8px';
+        removeBtn.style.fontSize = '16px';
+        removeBtn.style.cursor = 'pointer';
+        removeBtn.style.border = '1px solid #e57373';
+        removeBtn.style.borderRadius = '4px';
+        removeBtn.style.backgroundColor = '#ffebee';
+        removeBtn.style.color = '#c62828';
+        removeBtn.style.lineHeight = '1';
+        removeBtn.addEventListener('click', function () {
+            row.parentNode.removeChild(row);
+        });
+        row.appendChild(removeBtn);
+
+        container.appendChild(row);
+    }
+
+    function _parseModifiers(formEl) {
+        var modifiers = [];
+        var rows = formEl.querySelectorAll('.modifier-set-row');
+        for (var i = 0; i < rows.length; i++) {
+            var nameInput = rows[i].querySelector('.modifier-set-name');
+            var optInput = rows[i].querySelector('.modifier-set-options');
+            var name = nameInput ? nameInput.value.trim() : '';
+            var optStr = optInput ? optInput.value.trim() : '';
+            if (!name || !optStr) continue;
+            var options = optStr.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s; });
+            if (options.length === 0) continue;
+            modifiers.push({
+                id: EthoLogger.Utils.generateId('mod'),
+                name: name,
+                options: options
+            });
+        }
+        return modifiers;
+    }
+
+    // ---------------------------------------------------------------
     // Event handlers
     // ---------------------------------------------------------------
 
@@ -749,7 +891,8 @@
             category: category,
             type: type,
             key: key,
-            color: color
+            color: color,
+            modifiers: _parseModifiers(formEl)
         };
 
         var result;
