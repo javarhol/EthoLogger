@@ -409,7 +409,8 @@
                 id: EthoLogger.Utils.generateId('eth'),
                 name: name + ' Ethogram',
                 description: '',
-                behaviors: []
+                behaviors: [],
+                mutualExclusivityGroups: []
             },
             subjects: _parseSubjects(),
             videoFileName: '',

@@ -79,7 +79,12 @@
         try {
             var raw = localStorage.getItem(projectKey(id));
             if (raw) {
-                return JSON.parse(raw);
+                var project = JSON.parse(raw);
+                // Migration: ensure mutualExclusivityGroups exists
+                if (project && project.ethogram && !project.ethogram.mutualExclusivityGroups) {
+                    project.ethogram.mutualExclusivityGroups = [];
+                }
+                return project;
             }
         } catch (e) {
             console.error('EthoLogger Store: failed to load project ' + id, e);

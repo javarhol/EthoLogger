@@ -62,6 +62,11 @@
     // Stored reference for keyboard handler so it can be removed in destroy()
     var _keydownHandler = null;
 
+    // Resize handle state
+    var _resizeHandleEl = null;
+    var _resizeMouseMove = null;
+    var _resizeMouseUp = null;
+
     // ------------------------------------------------------------------
     // init
     // ------------------------------------------------------------------
@@ -120,6 +125,9 @@
 
         // ---- Set up all event listeners ----
         setupEventListeners();
+
+        // ---- Set up resize handle ----
+        _setupResizeHandle();
 
         // ---- Re-activate open state events ----
         // Annotations with offset === null represent state events that were
@@ -833,6 +841,159 @@
     }
 
     // ------------------------------------------------------------------
+    // Resize handle
+    // ------------------------------------------------------------------
+
+    function _setupResizeHandle() {
+        _resizeHandleEl = document.getElementById('resize-handle-row');
+        if (!_resizeHandleEl) return;
+
+        var layout = document.querySelector('.coder-layout');
+        if (!layout) return;
+
+        // Restore saved timeline height
+        var settings = EthoLogger.Store.getSettings();
+        var savedHeight = settings.timelinePanelHeight || 180;
+        layout.style.gridTemplateRows = '1fr 6px ' + savedHeight + 'px';
+
+        _resizeHandleEl.addEventListener('mousedown', _onResizeStart);
+        _resizeHandleEl.addEventListener('touchstart', _onResizeStart, { passive: false });
+    }
+
+    function _teardownResizeHandle() {
+        if (_resizeHandleEl) {
+            _resizeHandleEl.removeEventListener('mousedown', _onResizeStart);
+            _resizeHandleEl.removeEventListener('touchstart', _onResizeStart);
+        }
+        if (_resizeMouseMove) {
+            document.removeEventListener('mousemove', _resizeMouseMove);
+            document.removeEventListener('touchmove', _resizeMouseMove);
+        }
+        if (_resizeMouseUp) {
+            document.removeEventListener('mouseup', _resizeMouseUp);
+            document.removeEventListener('touchend', _resizeMouseUp);
+        }
+        _resizeHandleEl = null;
+        _resizeMouseMove = null;
+        _resizeMouseUp = null;
+    }
+
+    function _onResizeStart(e) {
+        e.preventDefault();
+        var layout = document.querySelector('.coder-layout');
+        if (!layout) return;
+
+        var startY = (e.touches ? e.touches[0].clientY : e.clientY);
+        var timelineEl = document.querySelector('.panel-timeline');
+        var startHeight = timelineEl ? timelineEl.getBoundingClientRect().height : 180;
+
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
+        if (_resizeHandleEl) _resizeHandleEl.classList.add('dragging');
+
+        _resizeMouseMove = function (ev) {
+            var currentY = (ev.touches ? ev.touches[0].clientY : ev.clientY);
+            var delta = startY - currentY;
+            var newHeight = startHeight + delta;
+
+            // Clamp: 80px min, 60% of viewport max
+            var maxHeight = window.innerHeight * 0.6;
+            newHeight = clamp(newHeight, 80, maxHeight);
+
+            layout.style.gridTemplateRows = '1fr 6px ' + newHeight + 'px';
+
+            // Resize timeline canvas
+            if (EthoLogger.Timeline && EthoLogger.Timeline.resizeCanvas) {
+                EthoLogger.Timeline.resizeCanvas();
+                EthoLogger.Timeline.computeLanes(currentProject);
+                if (EthoLogger.Timeline.render && videoElement) {
+                    EthoLogger.Timeline.render(
+                        videoElement.currentTime || 0,
+                        (currentProject && currentProject.annotations) || [],
+                        (currentProject && currentProject.ethogram && currentProject.ethogram.behaviors) || [],
+                        (videoElement && videoElement.duration) || 0
+                    );
+                }
+            }
+        };
+
+        _resizeMouseUp = function () {
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            if (_resizeHandleEl) _resizeHandleEl.classList.remove('dragging');
+
+            // Persist the final height
+            var timelineEl2 = document.querySelector('.panel-timeline');
+            if (timelineEl2) {
+                var finalHeight = Math.round(timelineEl2.getBoundingClientRect().height);
+                EthoLogger.Store.updateSettings({ timelinePanelHeight: finalHeight });
+            }
+
+            document.removeEventListener('mousemove', _resizeMouseMove);
+            document.removeEventListener('touchmove', _resizeMouseMove);
+            document.removeEventListener('mouseup', _resizeMouseUp);
+            document.removeEventListener('touchend', _resizeMouseUp);
+            _resizeMouseMove = null;
+            _resizeMouseUp = null;
+        };
+
+        document.addEventListener('mousemove', _resizeMouseMove);
+        document.addEventListener('touchmove', _resizeMouseMove, { passive: false });
+        document.addEventListener('mouseup', _resizeMouseUp);
+        document.addEventListener('touchend', _resizeMouseUp);
+    }
+
+    // ------------------------------------------------------------------
+    // Mutual exclusivity helpers
+    // ------------------------------------------------------------------
+
+    /**
+     * Find a behavior definition by its ID from the current project ethogram.
+     */
+    function _findBehaviorById(id) {
+        if (!currentProject || !currentProject.ethogram || !currentProject.ethogram.behaviors) return null;
+        var behaviors = currentProject.ethogram.behaviors;
+        for (var i = 0; i < behaviors.length; i++) {
+            if (behaviors[i].id === id) return behaviors[i];
+        }
+        return null;
+    }
+
+    /**
+     * Stop any active state events that are mutually exclusive with the
+     * given behavior, for the same subject.
+     */
+    function _stopExclusiveStates(behaviorId, subjectId) {
+        if (!currentProject || !currentProject.ethogram) return;
+        var groups = currentProject.ethogram.mutualExclusivityGroups || [];
+
+        // Collect all conflicting behavior IDs across all groups
+        var conflicting = {};
+        for (var g = 0; g < groups.length; g++) {
+            var group = groups[g];
+            if (group.behaviorIds.indexOf(behaviorId) !== -1) {
+                for (var b = 0; b < group.behaviorIds.length; b++) {
+                    var otherId = group.behaviorIds[b];
+                    if (otherId !== behaviorId) {
+                        conflicting[otherId] = true;
+                    }
+                }
+            }
+        }
+
+        // Stop any active states for conflicting behaviors (same subject)
+        for (var conflictId in conflicting) {
+            var sk = _stateKey(conflictId, subjectId);
+            if (activeStates[sk]) {
+                var behavior = _findBehaviorById(conflictId);
+                if (behavior) {
+                    _stopStateEvent(behavior, videoElement.currentTime);
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
     // codeBehavior — the central coding function
     // ------------------------------------------------------------------
 
@@ -938,6 +1099,9 @@
      * Start recording a state event (onset).
      */
     function _startStateEvent(behavior, onset, modifierValues) {
+        // Auto-stop any mutually exclusive active states
+        _stopExclusiveStates(behavior.id, activeSubjectId);
+
         var ann = {
             id: generateId('ann'),
             behaviorId: behavior.id,
@@ -1202,6 +1366,9 @@
 
         // Remove any open modifier popup
         _removeModifierPopup();
+
+        // Teardown resize handle
+        _teardownResizeHandle();
 
         // Reset playing state
         isPlaying = false;
