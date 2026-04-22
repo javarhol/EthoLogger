@@ -859,12 +859,38 @@ input[type="file"]::file-selector-button:hover {
     display: grid;
     grid-template-areas:
         "video coding"
+        "resize resize"
         "timeline timeline";
-    grid-template-rows: 1fr 180px;
+    grid-template-rows: 1fr 6px 180px;
     grid-template-columns: 2fr 1fr;
     gap: 4px;
     height: calc(100vh - var(--header-height));
     background: var(--bg-body);
+}
+
+.resize-handle-row {
+    grid-area: resize;
+    height: 6px;
+    background: var(--bg-body);
+    cursor: row-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    user-select: none;
+}
+
+.resize-handle-grip {
+    width: 40px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border-color);
+    transition: background var(--transition-fast);
+}
+
+.resize-handle-row:hover .resize-handle-grip,
+.resize-handle-row.dragging .resize-handle-grip {
+    background: var(--color-primary);
 }
 
 /* --------------------------------------------------------------------------
@@ -1601,10 +1627,14 @@ input[type="file"]::file-selector-button:hover {
             "video"
             "coding"
             "timeline";
-        grid-template-rows: auto 1fr 120px;
+        grid-template-rows: auto 1fr 120px !important;
         grid-template-columns: 1fr;
         height: auto;
         min-height: calc(100vh - var(--header-height));
+    }
+
+    .resize-handle-row {
+        display: none;
     }
 
     .panel-video {

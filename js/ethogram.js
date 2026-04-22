@@ -317,6 +317,13 @@
         _containerEl.appendChild(listContainer);
 
         renderBehaviorList(_project.ethogram, listContainer);
+
+        // Mutual exclusivity groups section
+        var exclusivityContainer = document.createElement('div');
+        exclusivityContainer.className = 'exclusivity-groups-container';
+        _containerEl.appendChild(exclusivityContainer);
+
+        _renderExclusivityGroups(exclusivityContainer);
     }
 
     /**
@@ -876,6 +883,183 @@
     }
 
     // ---------------------------------------------------------------
+    // Mutual Exclusivity Groups UI
+    // ---------------------------------------------------------------
+
+    function _renderExclusivityGroups(container) {
+        container.innerHTML = '';
+
+        // Only show if there are state-type behaviors
+        var stateBehaviors = [];
+        var behaviors = (_project && _project.ethogram && _project.ethogram.behaviors) || [];
+        for (var i = 0; i < behaviors.length; i++) {
+            if (behaviors[i].type === 'state') {
+                stateBehaviors.push(behaviors[i]);
+            }
+        }
+
+        if (stateBehaviors.length < 2) return; // Need at least 2 state behaviors
+
+        var section = document.createElement('div');
+        section.style.marginTop = '24px';
+        section.style.padding = '16px';
+        section.style.backgroundColor = '#f9f9f9';
+        section.style.borderRadius = '8px';
+        section.style.border = '1px solid #e0e0e0';
+
+        var header = document.createElement('h4');
+        header.textContent = 'Mutual Exclusivity Groups';
+        header.style.margin = '0 0 6px';
+        header.style.fontSize = '14px';
+        header.style.fontWeight = '600';
+        section.appendChild(header);
+
+        var hint = document.createElement('p');
+        hint.style.fontSize = '12px';
+        hint.style.color = '#888';
+        hint.style.margin = '0 0 12px';
+        hint.textContent = 'Behaviors in the same group cannot be active simultaneously. Starting one will auto-stop others in the group.';
+        section.appendChild(hint);
+
+        var groups = _project.ethogram.mutualExclusivityGroups || [];
+
+        for (var g = 0; g < groups.length; g++) {
+            _appendGroupRow(section, groups[g], stateBehaviors, g);
+        }
+
+        var addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.textContent = '+ Add Exclusivity Group';
+        addBtn.style.padding = '6px 14px';
+        addBtn.style.fontSize = '12px';
+        addBtn.style.cursor = 'pointer';
+        addBtn.style.border = '1px solid #ccc';
+        addBtn.style.borderRadius = '4px';
+        addBtn.style.backgroundColor = '#f8f8f8';
+        addBtn.style.marginTop = '8px';
+        addBtn.addEventListener('click', function () {
+            var newGroup = {
+                id: EthoLogger.Utils.generateId('meg'),
+                name: '',
+                behaviorIds: []
+            };
+            _project.ethogram.mutualExclusivityGroups.push(newGroup);
+            _autoSave();
+            _render();
+        });
+        section.appendChild(addBtn);
+
+        container.appendChild(section);
+    }
+
+    function _appendGroupRow(container, group, stateBehaviors, groupIndex) {
+        var row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.flexWrap = 'wrap';
+        row.style.gap = '8px';
+        row.style.alignItems = 'flex-start';
+        row.style.marginBottom = '10px';
+        row.style.paddingBottom = '10px';
+        row.style.borderBottom = '1px solid #e0e0e0';
+
+        // Group name input
+        var nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.placeholder = 'Group name (e.g. Locomotor States)';
+        nameInput.value = group.name || '';
+        nameInput.style.flex = '0 0 200px';
+        nameInput.style.padding = '6px 8px';
+        nameInput.style.fontSize = '13px';
+        nameInput.style.border = '1px solid #ccc';
+        nameInput.style.borderRadius = '4px';
+        (function (grp) {
+            nameInput.addEventListener('change', function () {
+                grp.name = nameInput.value.trim();
+                _autoSave();
+            });
+        })(group);
+        row.appendChild(nameInput);
+
+        // Behavior checkboxes
+        var checkboxArea = document.createElement('div');
+        checkboxArea.style.flex = '1';
+        checkboxArea.style.display = 'flex';
+        checkboxArea.style.flexWrap = 'wrap';
+        checkboxArea.style.gap = '6px';
+        checkboxArea.style.alignItems = 'center';
+
+        for (var i = 0; i < stateBehaviors.length; i++) {
+            var beh = stateBehaviors[i];
+            var label = document.createElement('label');
+            label.style.display = 'inline-flex';
+            label.style.alignItems = 'center';
+            label.style.gap = '3px';
+            label.style.fontSize = '12px';
+            label.style.cursor = 'pointer';
+            label.style.padding = '3px 8px';
+            label.style.borderRadius = '4px';
+            label.style.border = '1px solid #ddd';
+            label.style.backgroundColor = '#fff';
+
+            var swatch = document.createElement('span');
+            swatch.style.display = 'inline-block';
+            swatch.style.width = '10px';
+            swatch.style.height = '10px';
+            swatch.style.borderRadius = '2px';
+            swatch.style.backgroundColor = beh.color || '#999';
+            label.appendChild(swatch);
+
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = group.behaviorIds.indexOf(beh.id) !== -1;
+            checkbox.style.margin = '0';
+            (function (grp, behaviorId) {
+                checkbox.addEventListener('change', function () {
+                    var idx = grp.behaviorIds.indexOf(behaviorId);
+                    if (this.checked && idx === -1) {
+                        grp.behaviorIds.push(behaviorId);
+                    } else if (!this.checked && idx !== -1) {
+                        grp.behaviorIds.splice(idx, 1);
+                    }
+                    _autoSave();
+                });
+            })(group, beh.id);
+            label.appendChild(checkbox);
+
+            var nameSpan = document.createElement('span');
+            nameSpan.textContent = beh.name;
+            label.appendChild(nameSpan);
+
+            checkboxArea.appendChild(label);
+        }
+        row.appendChild(checkboxArea);
+
+        // Delete button
+        var deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = '\u00D7';
+        deleteBtn.style.padding = '4px 10px';
+        deleteBtn.style.fontSize = '16px';
+        deleteBtn.style.cursor = 'pointer';
+        deleteBtn.style.border = '1px solid #e57373';
+        deleteBtn.style.borderRadius = '4px';
+        deleteBtn.style.backgroundColor = '#ffebee';
+        deleteBtn.style.color = '#c62828';
+        deleteBtn.style.lineHeight = '1';
+        deleteBtn.style.flexShrink = '0';
+        (function (idx) {
+            deleteBtn.addEventListener('click', function () {
+                _project.ethogram.mutualExclusivityGroups.splice(idx, 1);
+                _autoSave();
+                _render();
+            });
+        })(groupIndex);
+        row.appendChild(deleteBtn);
+
+        container.appendChild(row);
+    }
+
+    // ---------------------------------------------------------------
     // Event handlers
     // ---------------------------------------------------------------
 
@@ -963,8 +1147,14 @@
                 description: '',
                 createdAt: new Date().toISOString(),
                 modifiedAt: new Date().toISOString(),
-                behaviors: []
+                behaviors: [],
+                mutualExclusivityGroups: []
             };
+        }
+
+        // Migration: ensure mutualExclusivityGroups exists
+        if (_project && _project.ethogram && !_project.ethogram.mutualExclusivityGroups) {
+            _project.ethogram.mutualExclusivityGroups = [];
         }
 
         _editingBehaviorId = null;
