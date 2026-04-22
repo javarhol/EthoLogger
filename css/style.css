@@ -1013,7 +1013,7 @@ input[type="file"]::file-selector-button:hover {
 .panel-main {
     grid-area: main;
     display: grid;
-    grid-template-rows: auto 1fr 6px 180px;
+    grid-template-rows: 300px 6px 1fr 6px 180px;
     overflow: hidden;
     background: var(--bg-body);
 }
@@ -1998,7 +1998,7 @@ input[type="file"]::file-selector-button:hover {
     }
 
     .panel-main {
-        grid-template-rows: auto 1fr 0 120px;
+        grid-template-rows: auto 1fr 0 0 120px;
     }
 
     .video-container {
