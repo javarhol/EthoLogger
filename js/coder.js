@@ -62,10 +62,9 @@
     // Stored reference for keyboard handler so it can be removed in destroy()
     var _keydownHandler = null;
 
-    // Resize handle state
-    var _resizeHandleEl = null;
-    var _resizeMouseMove = null;
-    var _resizeMouseUp = null;
+    // Resize handle state (one object per handle)
+    var _videoResizeState = { el: null, mousedownHandler: null, touchstartHandler: null, moveHandler: null, upHandler: null };
+    var _timelineResizeState = { el: null, mousedownHandler: null, touchstartHandler: null, moveHandler: null, upHandler: null };
 
     // ------------------------------------------------------------------
     // init
@@ -127,7 +126,7 @@
         setupEventListeners();
 
         // ---- Set up resize handle ----
-        _setupResizeHandle();
+        _setupResizeHandles();
 
         // ---- Re-activate open state events ----
         // Annotations with offset === null represent state events that were
@@ -850,63 +849,93 @@
     // Resize handle
     // ------------------------------------------------------------------
 
-    function _setupResizeHandle() {
-        _resizeHandleEl = document.getElementById('resize-handle-row');
-        if (!_resizeHandleEl) return;
-
+    function _setupResizeHandles() {
         var mainPanel = document.querySelector('.panel-main');
         if (!mainPanel) return;
 
-        // Restore saved timeline height
+        // Restore saved heights
         var settings = EthoLogger.Store.getSettings();
-        var savedHeight = settings.timelinePanelHeight || 180;
-        mainPanel.style.gridTemplateRows = 'auto 1fr 6px ' + savedHeight + 'px';
+        var savedVideoHeight = settings.videoPanelHeight || 300;
+        var savedTimelineHeight = settings.timelinePanelHeight || 180;
+        mainPanel.style.gridTemplateRows =
+            savedVideoHeight + 'px 6px 1fr 6px ' + savedTimelineHeight + 'px';
 
-        _resizeHandleEl.addEventListener('mousedown', _onResizeStart);
-        _resizeHandleEl.addEventListener('touchstart', _onResizeStart, { passive: false });
+        // Video handle
+        _videoResizeState.el = document.getElementById('resize-handle-video');
+        if (_videoResizeState.el) {
+            _videoResizeState.mousedownHandler = function (e) { _onResizeStart(e, 'video'); };
+            _videoResizeState.touchstartHandler = function (e) { _onResizeStart(e, 'video'); };
+            _videoResizeState.el.addEventListener('mousedown', _videoResizeState.mousedownHandler);
+            _videoResizeState.el.addEventListener('touchstart', _videoResizeState.touchstartHandler, { passive: false });
+        }
+
+        // Timeline handle
+        _timelineResizeState.el = document.getElementById('resize-handle-timeline');
+        if (_timelineResizeState.el) {
+            _timelineResizeState.mousedownHandler = function (e) { _onResizeStart(e, 'timeline'); };
+            _timelineResizeState.touchstartHandler = function (e) { _onResizeStart(e, 'timeline'); };
+            _timelineResizeState.el.addEventListener('mousedown', _timelineResizeState.mousedownHandler);
+            _timelineResizeState.el.addEventListener('touchstart', _timelineResizeState.touchstartHandler, { passive: false });
+        }
     }
 
-    function _teardownResizeHandle() {
-        if (_resizeHandleEl) {
-            _resizeHandleEl.removeEventListener('mousedown', _onResizeStart);
-            _resizeHandleEl.removeEventListener('touchstart', _onResizeStart);
-        }
-        if (_resizeMouseMove) {
-            document.removeEventListener('mousemove', _resizeMouseMove);
-            document.removeEventListener('touchmove', _resizeMouseMove);
-        }
-        if (_resizeMouseUp) {
-            document.removeEventListener('mouseup', _resizeMouseUp);
-            document.removeEventListener('touchend', _resizeMouseUp);
-        }
-        _resizeHandleEl = null;
-        _resizeMouseMove = null;
-        _resizeMouseUp = null;
+    function _teardownResizeHandles() {
+        [_videoResizeState, _timelineResizeState].forEach(function (state) {
+            if (state.el) {
+                if (state.mousedownHandler) state.el.removeEventListener('mousedown', state.mousedownHandler);
+                if (state.touchstartHandler) state.el.removeEventListener('touchstart', state.touchstartHandler);
+            }
+            if (state.moveHandler) {
+                document.removeEventListener('mousemove', state.moveHandler);
+                document.removeEventListener('touchmove', state.moveHandler);
+            }
+            if (state.upHandler) {
+                document.removeEventListener('mouseup', state.upHandler);
+                document.removeEventListener('touchend', state.upHandler);
+            }
+            state.el = null;
+            state.mousedownHandler = null;
+            state.touchstartHandler = null;
+            state.moveHandler = null;
+            state.upHandler = null;
+        });
     }
 
-    function _onResizeStart(e) {
+    function _onResizeStart(e, which) {
         e.preventDefault();
         var layout = document.querySelector('.panel-main');
         if (!layout) return;
 
+        var state = (which === 'video') ? _videoResizeState : _timelineResizeState;
         var startY = (e.touches ? e.touches[0].clientY : e.clientY);
+
+        // Get current heights of both resizable panels
+        var videoEl = document.querySelector('.panel-video');
         var timelineEl = document.querySelector('.panel-timeline');
-        var startHeight = timelineEl ? timelineEl.getBoundingClientRect().height : 180;
+        var startVideoH = videoEl ? videoEl.getBoundingClientRect().height : 300;
+        var startTimelineH = timelineEl ? timelineEl.getBoundingClientRect().height : 180;
 
         document.body.style.cursor = 'row-resize';
         document.body.style.userSelect = 'none';
-        if (_resizeHandleEl) _resizeHandleEl.classList.add('dragging');
+        if (state.el) state.el.classList.add('dragging');
 
-        _resizeMouseMove = function (ev) {
+        state.moveHandler = function (ev) {
             var currentY = (ev.touches ? ev.touches[0].clientY : ev.clientY);
-            var delta = startY - currentY;
-            var newHeight = startHeight + delta;
+            var delta = currentY - startY;
+            var newVideoH, newTimelineH;
 
-            // Clamp: 80px min, 60% of viewport max
-            var maxHeight = window.innerHeight * 0.6;
-            newHeight = clamp(newHeight, 80, maxHeight);
+            if (which === 'video') {
+                // Dragging down grows the video
+                newVideoH = clamp(startVideoH + delta, 120, window.innerHeight * 0.7);
+                newTimelineH = startTimelineH;
+            } else {
+                // Dragging up grows the timeline
+                newVideoH = startVideoH;
+                newTimelineH = clamp(startTimelineH - delta, 80, window.innerHeight * 0.6);
+            }
 
-            layout.style.gridTemplateRows = 'auto 1fr 6px ' + newHeight + 'px';
+            layout.style.gridTemplateRows =
+                newVideoH + 'px 6px 1fr 6px ' + newTimelineH + 'px';
 
             // Resize timeline canvas
             if (EthoLogger.Timeline && EthoLogger.Timeline.resizeCanvas) {
@@ -923,30 +952,34 @@
             }
         };
 
-        _resizeMouseUp = function () {
+        state.upHandler = function () {
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
-            if (_resizeHandleEl) _resizeHandleEl.classList.remove('dragging');
+            if (state.el) state.el.classList.remove('dragging');
 
-            // Persist the final height
-            var timelineEl2 = document.querySelector('.panel-timeline');
-            if (timelineEl2) {
-                var finalHeight = Math.round(timelineEl2.getBoundingClientRect().height);
-                EthoLogger.Store.updateSettings({ timelinePanelHeight: finalHeight });
+            // Persist the final heights
+            var settingsUpdate = {};
+            if (which === 'video') {
+                var finalVideoEl = document.querySelector('.panel-video');
+                if (finalVideoEl) settingsUpdate.videoPanelHeight = Math.round(finalVideoEl.getBoundingClientRect().height);
+            } else {
+                var finalTimelineEl = document.querySelector('.panel-timeline');
+                if (finalTimelineEl) settingsUpdate.timelinePanelHeight = Math.round(finalTimelineEl.getBoundingClientRect().height);
             }
+            EthoLogger.Store.updateSettings(settingsUpdate);
 
-            document.removeEventListener('mousemove', _resizeMouseMove);
-            document.removeEventListener('touchmove', _resizeMouseMove);
-            document.removeEventListener('mouseup', _resizeMouseUp);
-            document.removeEventListener('touchend', _resizeMouseUp);
-            _resizeMouseMove = null;
-            _resizeMouseUp = null;
+            document.removeEventListener('mousemove', state.moveHandler);
+            document.removeEventListener('touchmove', state.moveHandler);
+            document.removeEventListener('mouseup', state.upHandler);
+            document.removeEventListener('touchend', state.upHandler);
+            state.moveHandler = null;
+            state.upHandler = null;
         };
 
-        document.addEventListener('mousemove', _resizeMouseMove);
-        document.addEventListener('touchmove', _resizeMouseMove, { passive: false });
-        document.addEventListener('mouseup', _resizeMouseUp);
-        document.addEventListener('touchend', _resizeMouseUp);
+        document.addEventListener('mousemove', state.moveHandler);
+        document.addEventListener('touchmove', state.moveHandler, { passive: false });
+        document.addEventListener('mouseup', state.upHandler);
+        document.addEventListener('touchend', state.upHandler);
     }
 
     // ------------------------------------------------------------------
@@ -1532,7 +1565,7 @@
         _removeModifierPopup();
 
         // Teardown resize handle
-        _teardownResizeHandle();
+        _teardownResizeHandles();
 
         // Reset playing state
         isPlaying = false;
