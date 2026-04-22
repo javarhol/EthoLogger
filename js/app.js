@@ -28,6 +28,11 @@
             // Could auto-resume, but we show landing for explicitness
         }
 
+        // Initialize mode switcher (Lab/Field)
+        if (EthoLogger.Mode) {
+            EthoLogger.Mode.init();
+        }
+
         showLanding();
         _setupHeaderUI();
         _setupHelpShortcut();

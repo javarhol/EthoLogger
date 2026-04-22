@@ -140,6 +140,18 @@
 
         // ---- Update time display to initial state ----
         updateTimeDisplay();
+
+        // ---- Populate sidebar metadata ----
+        _populateSidebarMetadata();
+
+        // ---- Populate data feed with existing annotations ----
+        _populateDataFeed();
+
+        // ---- Update recording status (in case of open states) ----
+        _updateRecordingStatus();
+
+        // ---- Start session timer ----
+        _startSessionTimer();
     }
 
     // ------------------------------------------------------------------
@@ -164,7 +176,7 @@
             var btn = document.createElement('button');
             btn.className = 'behavior-btn';
             btn.setAttribute('data-behavior-id', behavior.id);
-            btn.style.cssText = '--behavior-color: ' + behavior.color + '; background-color: ' + behavior.color;
+            btn.style.setProperty('--behavior-color', behavior.color);
 
             var keyBadge = document.createElement('span');
             keyBadge.className = 'key-badge';
@@ -194,26 +206,19 @@
     }
 
     function _renderSubjectSelector() {
-        var container = document.getElementById('subject-selector');
+        var container = document.getElementById('sidebar-subject-list');
+        var section = document.getElementById('sidebar-subjects-section');
         if (!container) return;
 
         var subjects = (currentProject && currentProject.subjects) || [];
         if (subjects.length === 0) {
-            container.style.display = 'none';
+            if (section) section.style.display = 'none';
             container.innerHTML = '';
             return;
         }
 
-        container.style.display = '';
+        if (section) section.style.display = '';
         container.innerHTML = '';
-
-        var label = document.createElement('span');
-        label.style.fontSize = '11px';
-        label.style.textTransform = 'uppercase';
-        label.style.color = '#888';
-        label.style.marginRight = '4px';
-        label.textContent = 'Subject:';
-        container.appendChild(label);
 
         for (var i = 0; i < subjects.length; i++) {
             var subj = subjects[i];
@@ -348,10 +353,10 @@
         actions.appendChild(cancelBtn);
         popup.appendChild(actions);
 
-        var codingPanel = document.querySelector('.panel-coding');
-        if (codingPanel) {
-            codingPanel.style.position = 'relative';
-            codingPanel.appendChild(popup);
+        var mainPanel = document.querySelector('.panel-main');
+        if (mainPanel) {
+            mainPanel.style.position = 'relative';
+            mainPanel.appendChild(popup);
         }
     }
 
@@ -455,6 +460,7 @@
             }
 
             updateTimeDisplay();
+            _populateSidebarMetadata();
             EthoLogger.Store.autoSave(currentProject);
             showToast('Video loaded: ' + file.name);
         };
@@ -848,13 +854,13 @@
         _resizeHandleEl = document.getElementById('resize-handle-row');
         if (!_resizeHandleEl) return;
 
-        var layout = document.querySelector('.coder-layout');
-        if (!layout) return;
+        var mainPanel = document.querySelector('.panel-main');
+        if (!mainPanel) return;
 
         // Restore saved timeline height
         var settings = EthoLogger.Store.getSettings();
         var savedHeight = settings.timelinePanelHeight || 180;
-        layout.style.gridTemplateRows = '1fr 6px ' + savedHeight + 'px';
+        mainPanel.style.gridTemplateRows = 'auto 1fr 6px ' + savedHeight + 'px';
 
         _resizeHandleEl.addEventListener('mousedown', _onResizeStart);
         _resizeHandleEl.addEventListener('touchstart', _onResizeStart, { passive: false });
@@ -880,7 +886,7 @@
 
     function _onResizeStart(e) {
         e.preventDefault();
-        var layout = document.querySelector('.coder-layout');
+        var layout = document.querySelector('.panel-main');
         if (!layout) return;
 
         var startY = (e.touches ? e.touches[0].clientY : e.clientY);
@@ -900,7 +906,7 @@
             var maxHeight = window.innerHeight * 0.6;
             newHeight = clamp(newHeight, 80, maxHeight);
 
-            layout.style.gridTemplateRows = '1fr 6px ' + newHeight + 'px';
+            layout.style.gridTemplateRows = 'auto 1fr 6px ' + newHeight + 'px';
 
             // Resize timeline canvas
             if (EthoLogger.Timeline && EthoLogger.Timeline.resizeCanvas) {
@@ -1090,6 +1096,7 @@
         }
 
         showToast(behavior.name + _modifierLabel(behavior, modifierValues) + _subjectLabel() + ' at ' + formatTime(onset));
+        _addDataFeedEntry('POINT', behavior, onset, activeSubjectId);
         updateAnnotationCount();
         _triggerTimelineRedraw();
         EthoLogger.Store.autoSave(currentProject);
@@ -1131,6 +1138,8 @@
         });
 
         showToast(behavior.name + _modifierLabel(behavior, modifierValues) + _subjectLabel() + ' started at ' + formatTime(onset));
+        _addDataFeedEntry('START', behavior, onset, activeSubjectId);
+        _updateRecordingStatus();
         updateAnnotationCount();
         EthoLogger.Store.autoSave(currentProject);
     }
@@ -1166,6 +1175,8 @@
             ' (' + duration + 's)'
         );
 
+        _addDataFeedEntry('STOP', behavior, offset, activeSubjectId);
+        _updateRecordingStatus();
         updateAnnotationCount();
         _triggerTimelineRedraw();
         EthoLogger.Store.autoSave(currentProject);
@@ -1239,6 +1250,7 @@
         }
 
         showToast('Undone');
+        _updateRecordingStatus();
         updateAnnotationCount();
         _triggerTimelineRedraw();
         EthoLogger.Store.autoSave(currentProject);
@@ -1342,6 +1354,155 @@
     }
 
     // ------------------------------------------------------------------
+    // Sidebar metadata
+    // ------------------------------------------------------------------
+
+    function _populateSidebarMetadata() {
+        var el;
+        el = document.getElementById('sidebar-project-name');
+        if (el) el.textContent = (currentProject && currentProject.name) || '--';
+        el = document.getElementById('sidebar-coder-id');
+        if (el) el.textContent = (currentProject && currentProject.coderId) || '--';
+        el = document.getElementById('sidebar-video-name');
+        if (el) el.textContent = (currentProject && currentProject.videoFileName) || '--';
+        el = document.getElementById('sidebar-duration');
+        if (el) {
+            var dur = currentProject && currentProject.videoDuration;
+            el.textContent = dur ? formatTime(dur) : '--';
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Recording status (LED + Record button)
+    // ------------------------------------------------------------------
+
+    function _updateRecordingStatus() {
+        var hasActiveStates = false;
+        for (var key in activeStates) {
+            if (activeStates.hasOwnProperty(key)) {
+                hasActiveStates = true;
+                break;
+            }
+        }
+
+        var recordBtn = document.getElementById('btn-record');
+        var sessionLed = document.getElementById('session-status');
+
+        if (recordBtn) {
+            var ledDot = recordBtn.querySelector('.led-dot');
+            var label = recordBtn.querySelector('span:last-child');
+            if (hasActiveStates) {
+                recordBtn.classList.add('recording');
+                if (ledDot) ledDot.className = 'led-dot led-recording';
+                if (label) label.textContent = 'REC';
+            } else {
+                recordBtn.classList.remove('recording');
+                if (ledDot) ledDot.className = 'led-dot led-idle';
+                if (label) label.textContent = 'IDLE';
+            }
+        }
+
+        if (sessionLed) {
+            sessionLed.className = hasActiveStates ? 'led-dot led-recording' : 'led-dot led-idle';
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Data Feed
+    // ------------------------------------------------------------------
+
+    function _addDataFeedEntry(action, behavior, time, subjectId) {
+        var log = document.getElementById('datafeed-log');
+        var countEl = document.getElementById('datafeed-count');
+        if (!log) return;
+
+        var entry = document.createElement('div');
+        entry.className = 'datafeed-entry';
+
+        var timeSpan = document.createElement('span');
+        timeSpan.className = 'df-time';
+        timeSpan.textContent = formatTime(time);
+        entry.appendChild(timeSpan);
+
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'df-behavior';
+        nameSpan.textContent = behavior ? behavior.name : '?';
+        entry.appendChild(nameSpan);
+
+        var actionSpan = document.createElement('span');
+        actionSpan.className = 'df-action';
+        actionSpan.textContent = action;
+        entry.appendChild(actionSpan);
+
+        // Prepend (newest first)
+        if (log.firstChild) {
+            log.insertBefore(entry, log.firstChild);
+        } else {
+            log.appendChild(entry);
+        }
+
+        if (countEl) {
+            countEl.textContent = log.children.length;
+        }
+    }
+
+    function _populateDataFeed() {
+        var log = document.getElementById('datafeed-log');
+        if (!log || !currentProject || !currentProject.annotations) return;
+
+        log.innerHTML = '';
+
+        // Sort by onset, newest first
+        var sorted = currentProject.annotations.slice().sort(function (a, b) {
+            return b.onset - a.onset;
+        });
+
+        var behaviors = (currentProject.ethogram && currentProject.ethogram.behaviors) || [];
+        var behaviorMap = {};
+        for (var i = 0; i < behaviors.length; i++) {
+            behaviorMap[behaviors[i].id] = behaviors[i];
+        }
+
+        for (var j = 0; j < sorted.length; j++) {
+            var ann = sorted[j];
+            var beh = behaviorMap[ann.behaviorId];
+            var action = ann.type === 'point' ? 'POINT' : (ann.offset === null ? 'START' : 'START\u2192STOP');
+            _addDataFeedEntry(action, beh, ann.onset, ann.subjectId);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Session Timer
+    // ------------------------------------------------------------------
+
+    var _sessionStartTime = null;
+    var _sessionTimerInterval = null;
+
+    function _startSessionTimer() {
+        _sessionStartTime = Date.now();
+        var timerEl = document.getElementById('session-timer');
+        if (!timerEl) return;
+
+        _sessionTimerInterval = setInterval(function () {
+            var elapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+            var h = Math.floor(elapsed / 3600);
+            var m = Math.floor((elapsed % 3600) / 60);
+            var s = elapsed % 60;
+            timerEl.textContent =
+                (h < 10 ? '0' : '') + h + ':' +
+                (m < 10 ? '0' : '') + m + ':' +
+                (s < 10 ? '0' : '') + s;
+        }, 1000);
+    }
+
+    function _stopSessionTimer() {
+        if (_sessionTimerInterval) {
+            clearInterval(_sessionTimerInterval);
+            _sessionTimerInterval = null;
+        }
+    }
+
+    // ------------------------------------------------------------------
     // destroy
     // ------------------------------------------------------------------
 
@@ -1359,6 +1520,9 @@
 
         // Cancel animation frame
         stopRenderLoop();
+
+        // Stop session timer
+        _stopSessionTimer();
 
         // Clear active states
         activeStates = {};

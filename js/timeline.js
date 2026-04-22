@@ -271,7 +271,7 @@
         ctx.clearRect(0, 0, width, height);
 
         // 2. Draw background
-        ctx.fillStyle = '#1e1e2e';
+        ctx.fillStyle = '#1A1A1A';
         ctx.fillRect(0, 0, width, height);
 
         // 3. Draw lane backgrounds with alternating stripes
@@ -298,11 +298,11 @@
             var y = _laneYPositions[i];
 
             // Alternating stripe
-            ctx.fillStyle = (i % 2 === 0) ? '#1e1e2e' : '#252540';
+            ctx.fillStyle = (i % 2 === 0) ? '#1A1A1A' : '#222222';
             ctx.fillRect(leftMargin, y, width - leftMargin, laneHeight);
 
             // Also fill the label area with slightly darker background
-            ctx.fillStyle = (i % 2 === 0) ? '#1a1a2a' : '#222238';
+            ctx.fillStyle = (i % 2 === 0) ? '#181818' : '#202020';
             ctx.fillRect(0, y, leftMargin, laneHeight);
 
             // Lane separator line
@@ -613,7 +613,7 @@
         if (x < leftMargin || x > width) return;
 
         // Playhead line
-        ctx.strokeStyle = '#ff4444';
+        ctx.strokeStyle = '#FF4C00';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -622,7 +622,7 @@
 
         // Current time label
         var timeLabel = EthoLogger.Utils.formatTime(currentTime);
-        ctx.fillStyle = '#ff4444';
+        ctx.fillStyle = '#FF4C00';
         ctx.font = 'bold 10px monospace';
         ctx.textBaseline = 'top';
 

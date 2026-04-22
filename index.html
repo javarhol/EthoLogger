@@ -14,6 +14,10 @@
   <header id="app-header">
     <span class="header-logo">EthoLogger</span>
     <nav id="breadcrumb" class="header-breadcrumb"></nav>
+    <div class="header-center">
+      <span id="session-timer" class="session-timer">00:00:00</span>
+      <span id="session-status" class="led-dot led-idle"></span>
+    </div>
     <div class="header-right">
       <span id="header-project-info" class="header-project-info" style="display:none;"></span>
       <button id="btn-export-project" class="header-btn" title="Export project as JSON">Export</button>
@@ -93,58 +97,116 @@
   <section id="view-coder" class="view" data-breadcrumb="Video Coding">
     <div class="coder-layout">
 
-      <!-- Top-left: Video Player -->
-      <div class="panel-video">
-        <div class="video-container">
-          <video id="video-player" preload="auto"></video>
-        </div>
-        <div class="video-controls">
-          <button id="btn-play-pause" class="btn-play" title="Play/Pause (Space)">Play</button>
-          <span id="video-time" class="time-display">00:00.000 / 00:00.000</span>
-          <label for="input-video-file" class="load-video-btn">Load Video</label>
-          <input type="file" id="input-video-file" accept="video/*" style="display:none;">
-        </div>
-        <div class="seek-bar-wrapper">
-          <input type="range" id="seek-bar" class="seek-bar" min="0" max="100" step="0.001" value="0">
-        </div>
-        <div class="video-controls">
-          <div class="speed-group">
-            <button data-speed="0.25">0.25x</button>
-            <button data-speed="0.5">0.5x</button>
-            <button data-speed="1" class="active">1x</button>
-            <button data-speed="1.5">1.5x</button>
-            <button data-speed="2">2x</button>
+      <!-- LEFT: Sidebar -->
+      <aside class="panel-sidebar">
+        <div class="sidebar-section">
+          <span class="label-caps">Session</span>
+          <div class="sidebar-field">
+            <span class="sidebar-field-label">Project</span>
+            <span id="sidebar-project-name" class="sidebar-field-value">--</span>
           </div>
-          <button id="btn-frame-back" class="frame-step-btn" title="Previous frame (,)">&lt;|</button>
-          <span class="time-display">Frame</span>
-          <button id="btn-frame-fwd" class="frame-step-btn" title="Next frame (.)">|&gt;</button>
+          <div class="sidebar-field">
+            <span class="sidebar-field-label">Coder</span>
+            <span id="sidebar-coder-id" class="sidebar-field-value">--</span>
+          </div>
+          <div class="sidebar-field">
+            <span class="sidebar-field-label">Video</span>
+            <span id="sidebar-video-name" class="sidebar-field-value">--</span>
+          </div>
+          <div class="sidebar-field">
+            <span class="sidebar-field-label">Duration</span>
+            <span id="sidebar-duration" class="sidebar-field-value">--</span>
+          </div>
         </div>
-      </div>
 
-      <!-- Top-right: Coding Panel -->
-      <div class="panel-coding">
-        <div class="coding-header">
-          <h3>Behaviors <span class="badge" id="annotation-count">0</span></h3>
-          <div id="subject-selector" class="subject-selector" style="display:none;"></div>
+        <div class="sidebar-section" id="sidebar-subjects-section" style="display:none;">
+          <span class="label-caps">Subjects</span>
+          <div id="sidebar-subject-list" class="sidebar-subject-list"></div>
         </div>
-        <div class="coding-body">
+
+        <div class="sidebar-section">
+          <span class="label-caps">Status</span>
+          <div class="sidebar-transport">
+            <button id="btn-record" class="btn-record" title="Recording status indicator">
+              <span class="led-dot led-idle"></span>
+              <span>IDLE</span>
+            </button>
+            <label for="input-video-file" class="btn-tool">Load Video</label>
+            <input type="file" id="input-video-file" accept="video/*" style="display:none;">
+          </div>
+        </div>
+
+        <div class="sidebar-section sidebar-tools">
+          <span class="label-caps">Tools</span>
+          <button id="btn-undo" class="btn-tool" title="Undo (Ctrl+Z)">Undo</button>
+          <button id="btn-export-csv" class="btn-tool">Export CSV</button>
+        </div>
+
+        <div class="sidebar-section sidebar-mode">
+          <span class="label-caps">Mode</span>
+          <div class="mode-switcher">
+            <button id="btn-mode-lab" class="mode-btn active" data-mode="lab">Lab</button>
+            <button id="btn-mode-field" class="mode-btn" data-mode="field">Field</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER: Main Stage -->
+      <main class="panel-main">
+
+        <!-- Video + Controls -->
+        <div class="panel-video">
+          <div class="video-container">
+            <video id="video-player" preload="auto"></video>
+          </div>
+          <div class="video-controls">
+            <button id="btn-play-pause" class="btn-play" title="Play/Pause (Space)">Play</button>
+            <span id="video-time" class="time-display">00:00.000 / 00:00.000</span>
+            <div class="speed-group">
+              <button data-speed="0.25">0.25x</button>
+              <button data-speed="0.5">0.5x</button>
+              <button data-speed="1" class="active">1x</button>
+              <button data-speed="1.5">1.5x</button>
+              <button data-speed="2">2x</button>
+            </div>
+            <button id="btn-frame-back" class="frame-step-btn" title="Previous frame (,)">&lt;|</button>
+            <span class="time-display">Frame</span>
+            <button id="btn-frame-fwd" class="frame-step-btn" title="Next frame (.)">|&gt;</button>
+          </div>
+          <div class="seek-bar-wrapper">
+            <input type="range" id="seek-bar" class="seek-bar" min="0" max="100" step="0.001" value="0">
+          </div>
+        </div>
+
+        <!-- Behavior Keys Grid -->
+        <div class="panel-behavior-stage">
+          <div class="behavior-stage-header">
+            <span class="label-caps">Behaviors</span>
+            <span class="badge" id="annotation-count">0</span>
+          </div>
           <div id="behavior-buttons" class="behavior-buttons"></div>
         </div>
-        <div class="coding-tools">
-          <button id="btn-undo" class="btn-secondary btn-small" title="Undo (Ctrl+Z)">Undo</button>
-          <button id="btn-export-csv" class="btn-secondary btn-small">Export CSV</button>
+
+        <!-- Resize Handle -->
+        <div class="resize-handle-row" id="resize-handle-row">
+          <div class="resize-handle-grip"></div>
         </div>
-      </div>
 
-      <!-- Resize Handle -->
-      <div class="resize-handle-row" id="resize-handle-row">
-        <div class="resize-handle-grip"></div>
-      </div>
+        <!-- Timeline -->
+        <div class="panel-timeline">
+          <canvas id="timeline-canvas"></canvas>
+        </div>
 
-      <!-- Bottom: Timeline -->
-      <div class="panel-timeline">
-        <canvas id="timeline-canvas"></canvas>
-      </div>
+      </main>
+
+      <!-- RIGHT: Data Feed -->
+      <aside class="panel-datafeed">
+        <div class="datafeed-header">
+          <span class="label-caps">Data Feed</span>
+          <span id="datafeed-count" class="datafeed-count">0</span>
+        </div>
+        <div id="datafeed-log" class="datafeed-log"></div>
+      </aside>
 
     </div>
   </section>
@@ -189,6 +251,7 @@
 
   <script src="js/utils.js"></script>
   <script src="js/store.js"></script>
+  <script src="js/mode.js"></script>
   <script src="js/ethogram.js"></script>
   <script src="js/timeline.js"></script>
   <script src="js/coder.js"></script>
