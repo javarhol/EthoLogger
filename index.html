@@ -133,6 +133,13 @@
             </button>
             <label for="input-video-file" class="btn-tool">Load Video</label>
             <input type="file" id="input-video-file" accept="video/*" style="display:none;">
+            <button id="btn-load-url" class="btn-tool" type="button" title="Load video from a direct URL (e.g. .mp4, .webm). YouTube watch URLs are not supported.">Load URL</button>
+          </div>
+          <div id="url-input-row" class="url-input-row" style="display:none;">
+            <input type="text" id="input-video-url" placeholder="https://example.com/video.mp4" autocomplete="off">
+            <button id="btn-url-confirm" class="btn-tool" type="button">Load</button>
+            <button id="btn-url-cancel" class="btn-tool" type="button">Cancel</button>
+            <p class="url-input-hint">Direct video URL (.mp4, .webm). YouTube watch URLs won't play.</p>
           </div>
         </div>
 
@@ -148,6 +155,27 @@
             <button id="btn-mode-lab" class="mode-btn active" data-mode="lab">Lab</button>
             <button id="btn-mode-field" class="mode-btn" data-mode="field">Field</button>
           </div>
+        </div>
+
+        <div class="sidebar-section sidebar-scan" id="panel-scan-mode">
+          <span class="label-caps">Scan Mode</span>
+          <div class="scan-config-row">
+            <label for="input-scan-interval">Interval</label>
+            <input type="number" id="input-scan-interval" min="1" step="1" value="60">
+            <span class="scan-unit">s</span>
+          </div>
+          <div class="scan-config-row">
+            <label for="input-scan-sample">Sample</label>
+            <input type="number" id="input-scan-sample" min="0.1" step="0.1" value="5">
+            <span class="scan-unit">s</span>
+          </div>
+          <div class="scan-behavior-row">
+            <label><input type="radio" name="scan-behavior" id="radio-scan-auto" value="auto" checked> Auto-advance</label>
+            <label><input type="radio" name="scan-behavior" id="radio-scan-pause" value="pause"> Pause between</label>
+          </div>
+          <button id="btn-scan-start" class="btn-tool" type="button">Start scan</button>
+          <button id="btn-scan-continue" class="btn-tool" type="button" style="display:none;">Continue</button>
+          <p id="scan-status" class="scan-status">Idle.</p>
         </div>
       </aside>
 
@@ -260,6 +288,7 @@
   <script src="js/ethogram.js"></script>
   <script src="js/timeline.js"></script>
   <script src="js/coder.js"></script>
+  <script src="js/scan-mode.js"></script>
   <script src="js/exporter.js"></script>
   <script src="js/app.js"></script>
 

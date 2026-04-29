@@ -425,15 +425,46 @@
     // ------------------------------------------------------------------
 
     /**
-     * Load a video file into the player.
+     * Load a local video file into the player.
      * @param {File} file - The video File object from a file input.
      */
     function loadVideo(file) {
         if (!file || !videoElement) return;
 
         var blobUrl = URL.createObjectURL(file);
-        videoElement.src = blobUrl;
         currentProject.videoFileName = file.name;
+        currentProject.videoUrl = '';
+        _loadVideoSrc(blobUrl, 'Video loaded: ' + file.name, 'Video format not supported. Try MP4 (H.264).');
+    }
+
+    /**
+     * Load a video from a remote URL into the player. The URL is set
+     * directly as the video element src — works for any URL the browser
+     * can play with HTML5 video (e.g. .mp4, .webm, public CDN links).
+     * NOTE: YouTube watch URLs will not work — use a direct video URL.
+     * @param {string} url - The video URL.
+     */
+    function loadVideoFromUrl(url) {
+        if (!url || !videoElement) return;
+        url = String(url).trim();
+        if (!url) return;
+
+        currentProject.videoFileName = '';
+        currentProject.videoUrl = url;
+        _loadVideoSrc(
+            url,
+            'Video loaded from URL',
+            'Could not load video — check the URL or try a direct .mp4 link.'
+        );
+    }
+
+    /**
+     * Shared video-load pathway. Sets the video element src, wires up
+     * loadedmetadata/error handlers, initializes VideoFrame, and persists.
+     * @private
+     */
+    function _loadVideoSrc(src, successMsg, errorMsg) {
+        videoElement.src = src;
 
         videoElement.onloadedmetadata = function () {
             currentProject.videoDuration = videoElement.duration;
@@ -461,11 +492,11 @@
             updateTimeDisplay();
             _populateSidebarMetadata();
             EthoLogger.Store.autoSave(currentProject);
-            showToast('Video loaded: ' + file.name);
+            showToast(successMsg);
         };
 
         videoElement.onerror = function () {
-            showToast('Video format not supported. Try MP4 (H.264).');
+            showToast(errorMsg);
         };
     }
 
@@ -548,7 +579,11 @@
             switch (key) {
                 case ' ':
                     e.preventDefault();
-                    togglePlayPause();
+                    if (EthoLogger.ScanMode && EthoLogger.ScanMode.isWaiting && EthoLogger.ScanMode.isWaiting()) {
+                        EthoLogger.ScanMode.continueNext();
+                    } else {
+                        togglePlayPause();
+                    }
                     return;
 
                 case ',':
@@ -662,6 +697,57 @@
             });
         }
 
+        // 6b. Load from URL UI
+        var btnLoadUrl = document.getElementById('btn-load-url');
+        var urlRow = document.getElementById('url-input-row');
+        var urlInput = document.getElementById('input-video-url');
+        var btnUrlConfirm = document.getElementById('btn-url-confirm');
+        var btnUrlCancel = document.getElementById('btn-url-cancel');
+
+        function _showUrlRow() {
+            if (!urlRow) return;
+            urlRow.style.display = '';
+            if (urlInput) {
+                urlInput.value = (currentProject && currentProject.videoUrl) || '';
+                urlInput.focus();
+                urlInput.select();
+            }
+        }
+        function _hideUrlRow() {
+            if (urlRow) urlRow.style.display = 'none';
+        }
+        function _confirmUrl() {
+            if (!urlInput) return;
+            var v = urlInput.value.trim();
+            if (!v) {
+                showToast('Enter a video URL');
+                return;
+            }
+            loadVideoFromUrl(v);
+            _hideUrlRow();
+        }
+
+        if (btnLoadUrl) {
+            btnLoadUrl.addEventListener('click', _showUrlRow);
+        }
+        if (btnUrlConfirm) {
+            btnUrlConfirm.addEventListener('click', _confirmUrl);
+        }
+        if (btnUrlCancel) {
+            btnUrlCancel.addEventListener('click', _hideUrlRow);
+        }
+        if (urlInput) {
+            urlInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    _confirmUrl();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    _hideUrlRow();
+                }
+            });
+        }
+
         // 7. Video timeupdate — keep seek bar and time display in sync during
         //    manual seeking or non-rAF playback scenarios
         if (videoElement) {
@@ -747,7 +833,8 @@
                     videoElement.currentTime,
                     currentProject.annotations,
                     (currentProject.ethogram && currentProject.ethogram.behaviors) || [],
-                    videoElement.duration || currentProject.videoDuration || 0
+                    videoElement.duration || currentProject.videoDuration || 0,
+                    currentProject.scanWindows || []
                 );
             }
 
@@ -946,7 +1033,8 @@
                         videoElement.currentTime || 0,
                         (currentProject && currentProject.annotations) || [],
                         (currentProject && currentProject.ethogram && currentProject.ethogram.behaviors) || [],
-                        (videoElement && videoElement.duration) || 0
+                        (videoElement && videoElement.duration) || 0,
+                        (currentProject && currentProject.scanWindows) || []
                     );
                 }
             }
@@ -1381,7 +1469,8 @@
                 videoElement.currentTime || 0,
                 currentProject.annotations,
                 (currentProject.ethogram && currentProject.ethogram.behaviors) || [],
-                videoElement.duration || currentProject.videoDuration || 0
+                videoElement.duration || currentProject.videoDuration || 0,
+                currentProject.scanWindows || []
             );
         }
     }
@@ -1397,7 +1486,22 @@
         el = document.getElementById('sidebar-coder-id');
         if (el) el.textContent = (currentProject && currentProject.coderId) || '--';
         el = document.getElementById('sidebar-video-name');
-        if (el) el.textContent = (currentProject && currentProject.videoFileName) || '--';
+        if (el) {
+            var vname = '--';
+            if (currentProject) {
+                if (currentProject.videoFileName) {
+                    vname = currentProject.videoFileName;
+                } else if (currentProject.videoUrl) {
+                    // Show last path segment so the sidebar stays compact
+                    var u = currentProject.videoUrl;
+                    var slash = u.lastIndexOf('/');
+                    vname = slash >= 0 ? u.substring(slash + 1) : u;
+                    if (!vname) vname = u;
+                }
+            }
+            el.textContent = vname;
+            el.title = (currentProject && currentProject.videoUrl) || '';
+        }
         el = document.getElementById('sidebar-duration');
         if (el) {
             var dur = currentProject && currentProject.videoDuration;
@@ -1593,6 +1697,7 @@
         // Functions
         init: init,
         loadVideo: loadVideo,
+        loadVideoFromUrl: loadVideoFromUrl,
         setupEventListeners: setupEventListeners,
         togglePlayPause: togglePlayPause,
         startRenderLoop: startRenderLoop,
