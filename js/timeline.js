@@ -260,8 +260,9 @@
      * @param {Array} annotations - Array of annotation objects.
      * @param {Array} behaviors - Array of behavior definitions.
      * @param {number} duration - Total video duration in seconds.
+     * @param {Array} [scanWindows] - Optional scan-sampled windows to overlay.
      */
-    function render(currentTime, annotations, behaviors, duration) {
+    function render(currentTime, annotations, behaviors, duration, scanWindows) {
         if (!canvas || !ctx) return;
 
         var width = canvas.width / dpr;
@@ -286,8 +287,49 @@
         // 6. Draw annotation bars
         _drawAnnotations(ctx, annotations, currentTime, width);
 
+        // 6b. Draw scan-sampled windows as a translucent band along the top
+        if (scanWindows && scanWindows.length) {
+            _drawScanWindows(ctx, scanWindows, width);
+        }
+
         // 7. Draw playhead
         _drawPlayhead(ctx, currentTime, height, duration);
+    }
+
+    /**
+     * Draw scan-sampled windows as a translucent band along the top of
+     * the timeline. Windows that the user has played during scan mode
+     * get a distinct color so they can audit which intervals were
+     * actually reviewed.
+     * @private
+     */
+    function _drawScanWindows(ctx, scanWindows, width) {
+        var bandY = 0;
+        var bandHeight = 6;
+
+        for (var i = 0; i < scanWindows.length; i++) {
+            var win = scanWindows[i];
+            if (!win || typeof win.startSec !== 'number' || typeof win.endSec !== 'number') {
+                continue;
+            }
+            var x0 = timeToX(win.startSec);
+            var x1 = timeToX(win.endSec);
+
+            // Skip windows fully outside the visible range
+            if (x1 < leftMargin || x0 > width) continue;
+
+            // Clip to the timeline area
+            if (x0 < leftMargin) x0 = leftMargin;
+            if (x1 > width) x1 = width;
+
+            var w = Math.max(2, x1 - x0);
+            ctx.fillStyle = 'rgba(120, 200, 255, 0.45)';
+            ctx.fillRect(x0, bandY, w, bandHeight);
+        }
+
+        // Faint baseline under the band
+        ctx.fillStyle = 'rgba(120, 200, 255, 0.12)';
+        ctx.fillRect(leftMargin, bandY + bandHeight, width - leftMargin, 1);
     }
 
     /**

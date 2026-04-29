@@ -419,8 +419,10 @@
             },
             subjects: _parseSubjects(),
             videoFileName: '',
+            videoUrl: '',
             videoDuration: 0,
             annotations: [],
+            scanWindows: [],
             undoStack: []
         };
 
@@ -604,11 +606,21 @@
         // Initialize the coder module
         if (EthoLogger.Coder && currentProject) {
             EthoLogger.Coder.init(currentProject);
+            // Auto-restore URL-based videos on project reopen.
+            // (File-based videos can't auto-restore — the user must re-pick the file.)
+            if (currentProject.videoUrl) {
+                EthoLogger.Coder.loadVideoFromUrl(currentProject.videoUrl);
+            }
         }
 
         // Initialize the timeline module
         if (EthoLogger.Timeline && currentProject) {
             EthoLogger.Timeline.init('timeline-canvas', currentProject);
+        }
+
+        // Initialize the scan-mode module if loaded
+        if (EthoLogger.ScanMode && currentProject) {
+            EthoLogger.ScanMode.init(currentProject);
         }
 
         // Wire up export CSV button in coder view
@@ -652,7 +664,7 @@
         var hasBehaviors = project.ethogram &&
             project.ethogram.behaviors &&
             project.ethogram.behaviors.length > 0;
-        var hasVideo = project.videoDuration > 0;
+        var hasVideo = project.videoDuration > 0 || !!project.videoUrl;
 
         if (hasBehaviors && hasVideo) {
             // Project has ethogram and video — go straight to coder

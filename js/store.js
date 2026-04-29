@@ -84,6 +84,13 @@
                 if (project && project.ethogram && !project.ethogram.mutualExclusivityGroups) {
                     project.ethogram.mutualExclusivityGroups = [];
                 }
+                // Migration: ensure scanWindows + videoUrl fields exist
+                if (project && !project.scanWindows) {
+                    project.scanWindows = [];
+                }
+                if (project && typeof project.videoUrl === 'undefined') {
+                    project.videoUrl = '';
+                }
                 return project;
             }
         } catch (e) {

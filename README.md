@@ -39,16 +39,26 @@ EthoLogger is a free, browser-based tool for scoring animal behavior from video.
 
 ### Video Coding
 - Load any MP4 video file from your computer (the file stays on your machine — nothing is uploaded)
+- Or **load from a direct video URL** (`.mp4`, `.webm`, public CDN links) — useful for shared research clips. URL-loaded videos auto-restore when you reopen the project. *Note:* YouTube watch URLs (`youtube.com/watch?v=...`) are not supported — use a direct video link.
+  - As a workaround for YouTube content you have rights to, [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) can extract a direct stream URL: `yt-dlp -g <youtube-url>`. Paste the result into Load URL. Heads up — these URLs are signed and expire in a few hours, so they won't auto-restore reliably across sessions. For durable workflows, prefer hosting the MP4 yourself (lab server, S3, Cloudflare R2, etc.).
 - Playback speed controls: 0.25x, 0.5x, 1x, 1.5x, 2x
 - Frame-accurate stepping with `,` and `.` keys
 - Keyboard-driven coding for speed, or click the behavior buttons
 - Active state events glow to show they're recording
 - Undo with Ctrl+Z (Cmd+Z on Mac)
 
+### Scan Coding
+For scan-sampling long recordings: configure an **interval** (e.g. 60s) and a **sample duration** (e.g. 5s), and EthoLogger will jump the playhead through the video, playing each sample window in turn. Useful for estimating behavior frequencies without watching every second.
+
+- **Auto-advance** mode loops continuously through the video
+- **Pause-between** mode stops after each sample so you can finish coding; press Space (or Continue) to advance to the next window
+- Each played window is recorded on the project and shown as a translucent blue band along the top of the timeline, so you can audit which intervals were actually reviewed (helpful for IRR)
+
 ### Timeline
 - Color-coded bars show all coded behaviors over time
 - Click anywhere on the timeline to seek the video
 - Scroll to zoom in/out
+- Scan-sampled windows appear as a blue band along the top
 
 ### CSV Export
 Exports a standard CSV file with these columns:
@@ -70,7 +80,7 @@ Exports a standard CSV file with these columns:
 
 | Key | Action |
 |-----|--------|
-| Space | Play / Pause |
+| Space | Play / Pause (or Continue to next sample in scan-mode pause-between) |
 | , | Step back one frame |
 | . | Step forward one frame |
 | Left arrow | Seek back 5 seconds |
@@ -128,6 +138,7 @@ ethologger/
     store.js              localStorage persistence
     ethogram.js           Ethogram builder
     coder.js              Video coding engine
+    scan-mode.js          Scan-sampling state machine
     timeline.js           Canvas timeline
     exporter.js           CSV export
     app.js                App orchestrator
